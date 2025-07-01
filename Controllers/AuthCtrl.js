@@ -36,3 +36,31 @@ export const logins = asyncHandler(async (req, res) => {
     },
   });
 });
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  const { id } = req.params;
+
+  if (!password) {
+    res.status(400);
+    throw new Error("New password is required");
+  }
+
+  const customer = await Customer.findById(id);
+  if (!customer) {
+    res.status(404);
+    throw new Error("Customer not found");
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  await Customer.findByIdAndUpdate(
+    id,
+    { password: hashedPassword },
+    { new: true }
+  );
+
+  res.status(200).json({ message: "Password updated successfully" });
+});
+
