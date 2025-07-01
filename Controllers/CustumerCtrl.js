@@ -108,7 +108,7 @@ export const logins = asyncHandler(async (req, res) => {
 });
 
 export const getCustumers = asyncHandler(async (req, res) => {
-  const customers = await Customer.find({}).select("-password");
+  const customers = await Customer.find({ role: "customer" }).select("-password");
 
   res.status(200).json({
     message: "All customers fetched successfully ✅",
@@ -211,7 +211,6 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     },
   });
 });
-
 
 export const deleteCustomer = asyncHandler(async (req, res) => {
   const { id } = req.params;
