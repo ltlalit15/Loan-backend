@@ -10,7 +10,7 @@ import cors from "cors";
 import { dbConnect } from "./Config/dbConnect.js";
 import routes from "./app.js";
 
-const PORT = process.env.PORT;
+const PORT = 7000;
 
 const app = express();
 

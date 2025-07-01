@@ -1,13 +1,44 @@
-// models/PaymentModel.js
 import mongoose from "mongoose";
 
-const paymentSchema = new mongoose.Schema(
+const customerSchema = new mongoose.Schema(
   {
-
-    details: [],
-
+    customerName: {
+      type: String
+    },
+    companyName: {
+      type: String
+    },
+    email: {
+      type: String
+    },
+    phoneNumber: {
+      type: String
+    },
+    address: {
+      type: String
+    },
+    creditLine: {
+      type: String
+    },
+    password: {
+      type: String
+    },
+    gstDoc: {
+      type: String
+    },
+    panDoc: {
+      type: String
+    },
+    role: {
+      type: String,
+      default: "customer"
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true, 
+  }
 );
 
-export default mongoose.model("Customer", paymentSchema);
+const Customer = mongoose.model("Customer", customerSchema);
+
+export default Customer;
