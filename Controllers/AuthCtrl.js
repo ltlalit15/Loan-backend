@@ -1,4 +1,4 @@
-import Customer from "../Models/AuthModel.js";
+import Customer from "../Models/CustumerModel.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../Config/jwtToken.js";
