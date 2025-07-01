@@ -7,20 +7,20 @@ export const createWithdraw = asyncHandler(async (req, res) => {
     custumerId,
     approvedCreditLine,
     availableAmount,
-    withdrawAmount,
-    rateFactor,
+    withdrawAmount
   } = req.body;
 
+  const remainingCreditLine = availableAmount - withdrawAmount
   const withdraw = await Withdraw.create({
     custumerId,
     approvedCreditLine,
     availableAmount,
     withdrawAmount,
-    rateFactor,
+    remainingCreditLine
   });
 
   res.status(201).json({
-    message: "Withdrawal created successfully",
+    message: `${withdrawAmount} Withdrawal successfully`,
     withdraw,
   });
 });
@@ -31,5 +31,30 @@ export const getAllWithdrawals = asyncHandler(async (req, res) => {
     message: "All withdrawals fetched successfully ✅",
     total: withdrawals.length,
     withdrawals,
+  });
+});
+
+export const withdrawstatusupdate = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { withdrawStatus } = req.body;
+
+  const withdrawStatusCustomer = await Withdraw.findByIdAndUpdate(
+    id,
+    { withdrawStatus },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).select("-password");
+
+  if (!withdrawStatusCustomer) {
+    res.status(404);
+    throw new Error("Customer not found");
+  }
+
+  res.status(200).json({
+    message: "Customer  withdrawStatus successfully ✅",
+    customerId: withdrawStatusCustomer._id,
+    withdrawStatus: withdrawStatusCustomer.withdrawStatus,
   });
 });
