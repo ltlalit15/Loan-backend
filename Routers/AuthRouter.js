@@ -1,6 +1,6 @@
 // routes/paymentRoutes.js
 import express from "express";
-import { logins, CreateCustumer, getCustumers, UpdateCustumerStatus } from "../Controllers/AuthCtrl.js";
+import { logins, CreateCustumer, getCustumers, UpdateCustumerStatus, deleteCustomer, updateCustomer } from "../Controllers/AuthCtrl.js";
 
 import upload from "../Utils/multer.js";
 
@@ -18,6 +18,17 @@ router.post(
   CreateCustumer
 );
 
-router.patch("/updatecompanystatus/:id", UpdateCustumerStatus);
+router.put(
+  "/updateCustumer/:id",
+  upload.fields([
+    { name: "gstDoc", maxCount: 1 },
+    { name: "panDoc", maxCount: 1 },
+  ]),
+  updateCustomer
+);
+
+
+router.patch("/updatecustomerstatus/:id", UpdateCustumerStatus);
+router.delete("/deleteCustomer/:id", deleteCustomer);
 
 export default router;
