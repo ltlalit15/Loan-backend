@@ -16,11 +16,11 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
     factorRate,
     password,
   } = req.body;
-  
+
   const existingCustomer = await Customer.findOne({ email });
   if (existingCustomer) {
     res.status(400);
-    throw new Error("Customer already exists");
+    return res.status(409).json({ message: "Customer already exists" });
   }
 
   let gstDocUrl = "";
@@ -54,7 +54,7 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
     panDoc: panDocUrl,
     password: hashedPassword,
   });
-
+  console.log("customer", customer);
   res.status(201).json({
     message: "Customer created successfully ✅",
     customer: {
@@ -93,9 +93,53 @@ export const logins = asyncHandler(async (req, res) => {
     customer: {
       id: customer._id,
       customerName: customer.customerName,
+      companyName: customer.companyName,
       email: customer.email,
+      phoneNumber: customer.phoneNumber,
+      address: customer.address,
+      creditLine: customer.creditLine,
+      factorRate: customer.factorRate,
+      gstDoc: customer.gstDoc,
+      panDoc: customer.panDoc,
       role: customer.role,
-      token
+      token,
     },
   });
 });
+
+export const getCustumers = asyncHandler(async (req, res) => {
+  const customers = await Customer.find({}).select("-password");
+
+  res.status(200).json({
+    message: "All customers fetched successfully ✅",
+    total: customers.length,
+    customers,
+  });
+});
+
+export const UpdateCustumerStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { customerStatus } = req.body;
+
+  const updatedCustomer = await Customer.findByIdAndUpdate(
+    id,
+    { customerStatus },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).select("-password");
+
+  if (!updatedCustomer) {
+    res.status(404);
+    throw new Error("Customer not found");
+  }
+
+  res.status(200).json({
+    message: "Customer status updated successfully ✅",
+    customerId: updatedCustomer._id,
+    updatedStatus: updatedCustomer.customerStatus,
+  });
+});
+
+

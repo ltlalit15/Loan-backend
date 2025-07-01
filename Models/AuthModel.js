@@ -32,6 +32,10 @@ const customerSchema = new mongoose.Schema(
     role: {
       type: String,
       default: "customer"
+    },
+    customerStatus: {
+      type: String,
+      default: "inReview"
     }
   },
   {
