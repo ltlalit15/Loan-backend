@@ -29,6 +29,21 @@ const customerSchema = new mongoose.Schema(
     panDoc: {
       type: String
     },
+    approvedAmount: {
+      type: String
+    },
+    monthlyInstallment: {
+      type: String
+    },
+    term_month: {
+      type: String
+    },
+    totalRepayment: {
+      type: String
+    },
+    factorRate: {
+      type: String
+    },
     role: {
       type: String,
       default: "customer"

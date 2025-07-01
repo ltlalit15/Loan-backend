@@ -13,8 +13,7 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
     phoneNumber,
     address,
     creditLine,
-    factorRate,
-    password,
+    password
   } = req.body;
 
   const existingCustomer = await Customer.findOne({ email });
@@ -49,7 +48,6 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
     phoneNumber,
     address,
     creditLine,
-    factorRate,
     gstDoc: gstDocUrl,
     panDoc: panDocUrl,
     password: hashedPassword,
@@ -151,7 +149,11 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     phoneNumber,
     address,
     creditLine,
-    factorRate,
+    approvedAmount,
+    totalRepayment,
+    term_month,
+    monthlyInstallment,
+    factorRate
   } = req.body;
 
   const customer = await Customer.findById(id);
@@ -192,6 +194,10 @@ export const updateCustomer = asyncHandler(async (req, res) => {
   customer.address = address || customer.address;
   customer.creditLine = creditLine || customer.creditLine;
   customer.factorRate = factorRate || customer.factorRate;
+  customer.approvedAmount = approvedAmount || customer.approvedAmount;
+  customer.totalRepayment = totalRepayment || customer.totalRepayment;
+  customer.term_month = term_month || customer.term_month;
+  customer.monthlyInstallment = monthlyInstallment || customer.monthlyInstallment;
 
   const updatedCustomer = await customer.save();
 
@@ -207,7 +213,10 @@ export const updateCustomer = asyncHandler(async (req, res) => {
       creditLine: updatedCustomer.creditLine,
       factorRate: updatedCustomer.factorRate,
       gstDoc: updatedCustomer.gstDoc,
-      panDoc: updatedCustomer.panDoc,
+      approvedAmount: approvedAmount.panDoc,
+      totalRepayment: updatedCustomer.totalRepayment,
+      term_month: updatedCustomer.term_month,
+      monthlyInstallment: updatedCustomer.monthlyInstallment,
     },
   });
 });
