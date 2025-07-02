@@ -24,8 +24,8 @@ router.put(
     { name: "gstDoc", maxCount: 1 },
     { name: "panDoc", maxCount: 1 },
   ]),
-  authMiddleware,
-  isCustumer,
+  // authMiddleware,
+  // isCustumer,
   updateCustomer
 );
 

@@ -41,6 +41,9 @@ const customerSchema = new mongoose.Schema(
     totalRepayment: {
       type: String
     },
+    availBalance: {
+      type: String
+    },
     factorRate: {
       type: String
     },

@@ -3,7 +3,12 @@ import mongoose from "mongoose";
 
 const withdrawSchema = new mongoose.Schema(
     {
-        custumerId: { type: String, required: true },
+  customerId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Customer",
+  required: true,
+},
+
         approvedCreditLine: { type: String },
         availableAmount: { type: String },
         withdrawAmount: { type: String },
