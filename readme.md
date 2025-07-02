@@ -1,5 +1,4 @@
-1 . custumer id se withdraw kiye hue total amount weekly 
-2 . withraw status update hoga jab custumer me avialble balance me update karna
+
 ----------------------------------------------------------------------------------------------
 repayments
 1. pay amount 
