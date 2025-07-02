@@ -47,6 +47,9 @@ const customerSchema = new mongoose.Schema(
     factorRate: {
       type: String
     },
+    remainingRepayment: {
+      type: String
+    },
     role: {
       type: String,
       default: "customer"

@@ -1,4 +1,6 @@
 import Customer from "../Models/CustumerModel.js";
+import Repayment from "../Models/RepaymentsModel.js";
+import Withdraw from "../Models/WithdrawModel.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../Config/jwtToken.js";
@@ -162,7 +164,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     term_month,
     monthlyInstallment,
     factorRate,
-    availBalance
+    availBalance,
   } = req.body;
 
   const customer = await Customer.findById(id);
@@ -209,6 +211,10 @@ export const updateCustomer = asyncHandler(async (req, res) => {
   customer.availBalance = availBalance || customer.availBalance;
   customer.monthlyInstallment = monthlyInstallment || customer.monthlyInstallment;
 
+  if (totalRepayment !== undefined) {
+    customer.remainingRepayment = totalRepayment;
+  }
+
   const updatedCustomer = await customer.save();
   console.log("updatedCustomer",);
   res.status(200).json({
@@ -229,6 +235,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
       term_month: updatedCustomer.term_month,
       monthlyInstallment: updatedCustomer.monthlyInstallment,
       availBalance: updatedCustomer.availBalance,
+      remainingRepayments: updatedCustomer.remainingRepayments,
     },
   });
 });
@@ -242,6 +249,9 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Customer not found");
   }
+
+  await Repayment.deleteMany({ customerId: id });
+  await Withdraw.deleteMany({ customerId: id });
 
   res.status(200).json({
     message: "Customer deleted successfully",
