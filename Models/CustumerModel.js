@@ -51,6 +51,14 @@ const customerSchema = new mongoose.Schema(
     customerStatus: {
       type: String,
       default: "inReview"
+    },
+    resetToken:
+    {
+      type: String
+
+    },
+    resetTokenExpiry: {
+      type: Date
     }
   },
   {
