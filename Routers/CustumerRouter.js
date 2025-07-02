@@ -29,7 +29,6 @@ router.put(
   updateCustomer
 );
 
-
 router.patch("/updatecustomerstatus/:id", authMiddleware, isAdmin, UpdateCustumerStatus);
 router.delete("/deleteCustomer/:id", authMiddleware, isAdmin, deleteCustomer);
 

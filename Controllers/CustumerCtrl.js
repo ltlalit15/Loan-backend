@@ -236,3 +236,5 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
     customerId: deletedCustomer._id,
   });
 });
+
+

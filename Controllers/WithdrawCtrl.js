@@ -58,3 +58,43 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
     withdrawStatus: withdrawStatusCustomer.withdrawStatus,
   });
 });
+
+export const getWeeklyWithdrawalsByCustomerId = asyncHandler(async (req, res) => {
+  const { customerId } = req.params;
+
+  const result = await Withdraw.aggregate([
+    {
+      $match: {
+        custumerId: customerId,
+      },
+    },
+    {
+      $addFields: {
+        week: { $isoWeek: "$createdAt" },
+        year: { $isoWeekYear: "$createdAt" },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          year: "$year",
+          week: "$week",
+        },
+        totalWithdrawAmount: { $sum: { $toDouble: "$withdrawAmount" } },
+        count: { $sum: 1 },
+        withdrawals: { $push: "$$ROOT" },
+      },
+    },
+    {
+      $sort: {
+        "_id.year": -1,
+        "_id.week": -1,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    message: "Weekly withdrawals fetched successfully ✅",
+    result,
+  });
+});
