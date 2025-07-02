@@ -1,6 +1,6 @@
 // routes/paymentRoutes.js
 import express from "express";
-import { logins, CreateCustumer, getCustumers, UpdateCustumerStatus, deleteCustomer, updateCustomer } from "../Controllers/CustumerCtrl.js";
+import { logins, CreateCustumer, getCustumers, UpdateCustumerStatus, deleteCustomer, updateCustomer, getCustomerNames } from "../Controllers/CustumerCtrl.js";
 
 import upload from "../Utils/multer.js";
 import { authMiddleware, isAdmin, isCustumer } from "../Middlewares/AuthMiddleware.js";
@@ -31,5 +31,6 @@ router.put(
 
 router.patch("/updatecustomerstatus/:id", authMiddleware, isAdmin, UpdateCustumerStatus);
 router.delete("/deleteCustomer/:id", authMiddleware, isAdmin, deleteCustomer);
+router.get("/customer-names", getCustomerNames);
 
 export default router;

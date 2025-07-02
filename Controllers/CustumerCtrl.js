@@ -238,3 +238,16 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
 });
 
 
+export const getCustomerNames = asyncHandler(async (req, res) => {
+  const customers = await Customer.find({ role: "customer" }, { customerName: 1 });
+
+  const customerList = customers.map(customer => ({
+    id: customer._id,
+    name: customer.customerName
+  }));
+  res.status(200).json({
+    msg: "Successfully fetched All Customer",
+    total: customerList.length,
+    customers: customerList
+  })
+});
