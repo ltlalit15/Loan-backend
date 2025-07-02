@@ -21,8 +21,8 @@ export const logins = asyncHandler(async (req, res) => {
 
   // ✅ Suspended customer check
   if (customer.customerStatus === "Suspended") {
-    res.status(403);
-    throw new Error("Your account is suspended. Please contact admin.");
+    res.status(403).
+      json({ message: "Your account is suspended. Please contact admin." });
   }
 
   const token = generateToken(customer._id);
@@ -95,7 +95,6 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     note: "Use this token in /reset-password/:token API",
   });
 });
-
 
 export const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;

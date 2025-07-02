@@ -2,16 +2,31 @@
 import Repayment from "../Models/RepaymentsModel.js";
 import Custumer from "../Models/CustumerModel.js";
 import asyncHandler from "express-async-handler";
+import moment from "moment";
+
 
 export const repayments = asyncHandler(async (req, res) => {
-  const {
-    customerId,
-    payAmount
-  } = req.body;
+  const { customerId, payAmount } = req.body;
 
+  // Get current month start and end
+  const startOfMonth = moment().startOf("month").toDate();
+  const endOfMonth = moment().endOf("month").toDate();
+
+  // Check if repayment already exists in this month
+  const existingRepayment = await Repayment.findOne({
+    customerId,
+    createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+  });
+
+  if (existingRepayment) {
+    res.status(400);
+    throw new Error("Customer has already made repayment this month.");
+  }
+
+  // Else, allow repayment
   const Pay = await Repayment.create({
     customerId,
-    payAmount
+    payAmount,
   });
 
   res.status(201).json({
@@ -19,6 +34,7 @@ export const repayments = asyncHandler(async (req, res) => {
     Pay,
   });
 });
+;
 
 export const getrepayments = asyncHandler(async (req, res) => {
   const { customerId, id } = req.query;
