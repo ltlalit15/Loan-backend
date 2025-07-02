@@ -19,8 +19,7 @@ export const repayments = asyncHandler(async (req, res) => {
   });
 
   if (existingRepayment) {
-    res.status(400);
-    throw new Error("Customer has already made repayment this month.");
+    return res.status(400).json({ message: "Customer has already made repayment this month." });
   }
 
   // Else, allow repayment
