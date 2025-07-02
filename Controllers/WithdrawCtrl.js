@@ -9,10 +9,10 @@ export const createWithdraw = asyncHandler(async (req, res) => {
     customerId,
     approvedCreditLine,
     availableAmount,
+    remainingCreditLine,
     withdrawAmount
   } = req.body;
 
-  const remainingCreditLine = availableAmount - withdrawAmount
   const withdraw = await Withdraw.create({
     customerId: new mongoose.Types.ObjectId(customerId),
     approvedCreditLine,
@@ -28,11 +28,20 @@ export const createWithdraw = asyncHandler(async (req, res) => {
 });
 
 export const getAllWithdrawals = asyncHandler(async (req, res) => {
-  const withdrawals = await Withdraw.find();
+
+  const withdrawals = await Withdraw.find().populate({
+    path: 'customerId',
+    select: 'customerName'
+  });
+    const result = withdrawals.map((withdraw) => ({
+    ...withdraw._doc,
+    customerId: withdraw.customerId?._id,
+    customerName: withdraw.customerId?.customerName
+  }));
   res.status(200).json({
     message: "All withdrawals fetched successfully ✅",
-    total: withdrawals.length,
-    withdrawals,
+    total: result.length,
+    result,
   });
 });
 
@@ -49,11 +58,24 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
     }
   ).select("-password");
   console.log("withdrawStatusCustomer", withdrawStatusCustomer);
+  
   const withdrawcustomerId = withdrawStatusCustomer?.customerId
-  const withdrawAmount = withdrawStatusCustomer?.withdrawAmount
-  const findCustomerAndUpdate = await Custumer.findByIdAndUpdate({ _id: withdrawcustomerId },
-    // {availableBalance:}
-  )
+  const CustomerwithdrawAmount = withdrawStatusCustomer?.withdrawAmount
+  const CustomeravailableAmount = withdrawStatusCustomer?.availableAmount
+  const CustomerwithdrawStatus = withdrawStatusCustomer?.withdrawStatus
+  console.log("withdrawcustomerId",withdrawcustomerId);
+  console.log("CustomerwithdrawAmount",CustomerwithdrawAmount);
+  console.log("CustomeravailableAmount",CustomeravailableAmount);
+  console.log("CustomerwithdrawStatus",CustomerwithdrawStatus);
+
+  if (CustomerwithdrawStatus == "Approved") {
+    const aaaa = await Custumer.findByIdAndUpdate({ _id: withdrawcustomerId },
+      { availableBalance: CustomeravailableAmount - CustomerwithdrawAmount }
+    )
+    console.log("aaaa", aaaa);
+
+  }
+
   if (!withdrawStatusCustomer) {
     res.status(404);
     throw new Error("Customer not found");

@@ -7,7 +7,7 @@ import { authMiddleware, isAdmin, isCustumer } from "../Middlewares/AuthMiddlewa
 const router = express.Router();
 
 router.post("/login", logins);
-router.get("/custumers", authMiddleware, isAdmin, getCustumers);
+router.get("/custumers", authMiddleware, getCustumers);
 
 router.post(
   "/createcustumer",

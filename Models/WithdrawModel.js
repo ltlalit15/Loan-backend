@@ -9,8 +9,8 @@ const withdrawSchema = new mongoose.Schema(
   required: true,
 },
 
-        approvedCreditLine: { type: String },
-        availableAmount: { type: String },
+        approvedCreditLine: { type: String },//10000
+        availableAmount: { type: String },//10000
         withdrawAmount: { type: String },
         remainingCreditLine: { type: String },
         withdrawStatus: { type: String, default: "pending" },
