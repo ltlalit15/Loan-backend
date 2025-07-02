@@ -19,31 +19,24 @@ export const repayments = asyncHandler(async (req, res) => {
   });
 });
 
+
 export const getrepayments = asyncHandler(async (req, res) => {
-  const { customerId, payAmount } = req.body;
+  const { customerId, id } = req.query;
 
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  let filter = {};
 
-  const existingRepayment = await Repayment.findOne({
-    customerId,
-    createdAt: { $gte: startOfMonth, $lte: endOfMonth },
-  });
-
-  if (existingRepayment) {
-    res.status(400);
-    throw new Error("Repayment already exists for this month ❌");
+  if (id) {
+    filter._id = id;
+  } else if (customerId) {
+    filter.customerId = customerId;
   }
 
-  const Pay = await Repayment.create({
-    customerId,
-    payAmount,
-  });
+  const result = await Repayment.find(filter);
 
-  res.status(201).json({
-    message: "Paid successfully ✅",
-    Pay,
+  res.status(200).json({
+    message: "Repayments fetched successfully ✅",
+    total: result.length,
+    result,
   });
 });
 
