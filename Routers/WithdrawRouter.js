@@ -3,7 +3,7 @@ import {
     createWithdraw,
     getAllWithdrawals,
     withdrawstatusupdate,
-    getWeeklyWithdrawalsByCustomerId
+    getWithdrwByCustomerId
 } from "../Controllers/WithdrawCtrl.js";
 
 import { authMiddleware, isAdmin, isCustumer } from "../Middlewares/AuthMiddleware.js";
@@ -13,6 +13,6 @@ const router = express.Router();
 router.post("/withdrawpayment", createWithdraw);
 router.get("/getallwithdrawpayment", getAllWithdrawals);
 router.patch("/withdrawstatusupdate/:id", withdrawstatusupdate);
-router.get("/getWithdrwByCustumerId/:customerId", getWeeklyWithdrawalsByCustomerId)
+router.get("/getWithdrwBycustomerId/:customerId", getWithdrwByCustomerId)
 
 export default router;

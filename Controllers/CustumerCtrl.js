@@ -106,10 +106,18 @@ export const logins = asyncHandler(async (req, res) => {
 });
 
 export const getCustumers = asyncHandler(async (req, res) => {
-  const customers = await Customer.find({ role: "customer" }).select("-password");
+  const { customerId } = req.query;
+
+  let customers;
+
+  if (customerId) {
+    customers = await Customer.find({ _id: customerId, role: "customer" }).select("-password");
+  } else {
+    customers = await Customer.find({ role: "customer" }).select("-password");
+  }
 
   res.status(200).json({
-    message: "All customers fetched successfully ✅",
+    message: "Customers fetched successfully",
     total: customers.length,
     customers,
   });
@@ -153,7 +161,8 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     totalRepayment,
     term_month,
     monthlyInstallment,
-    factorRate
+    factorRate,
+    availBalance
   } = req.body;
 
   const customer = await Customer.findById(id);
@@ -197,10 +206,11 @@ export const updateCustomer = asyncHandler(async (req, res) => {
   customer.approvedAmount = approvedAmount || customer.approvedAmount;
   customer.totalRepayment = totalRepayment || customer.totalRepayment;
   customer.term_month = term_month || customer.term_month;
+  customer.availBalance = availBalance || customer.availBalance;
   customer.monthlyInstallment = monthlyInstallment || customer.monthlyInstallment;
 
   const updatedCustomer = await customer.save();
-
+  console.log("updatedCustomer",);
   res.status(200).json({
     message: "Customer updated successfully ✅",
     customer: {
@@ -213,10 +223,12 @@ export const updateCustomer = asyncHandler(async (req, res) => {
       creditLine: updatedCustomer.creditLine,
       factorRate: updatedCustomer.factorRate,
       gstDoc: updatedCustomer.gstDoc,
-      approvedAmount: approvedAmount.panDoc,
+      panDoc: updatedCustomer.panDoc,
+      approvedAmount: updatedCustomer.approvedAmount,
       totalRepayment: updatedCustomer.totalRepayment,
       term_month: updatedCustomer.term_month,
       monthlyInstallment: updatedCustomer.monthlyInstallment,
+      availBalance: updatedCustomer.availBalance,
     },
   });
 });

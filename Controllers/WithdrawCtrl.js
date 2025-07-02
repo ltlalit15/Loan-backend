@@ -1,10 +1,12 @@
 // Controllers/WithdrawController.js
 import Withdraw from "../Models/WithdrawModel.js";
+import Custumer from "../Models/CustumerModel.js";
 import asyncHandler from "express-async-handler";
+import mongoose from "mongoose";
 
 export const createWithdraw = asyncHandler(async (req, res) => {
   const {
-    custumerId,
+    customerId,
     approvedCreditLine,
     availableAmount,
     withdrawAmount
@@ -12,7 +14,7 @@ export const createWithdraw = asyncHandler(async (req, res) => {
 
   const remainingCreditLine = availableAmount - withdrawAmount
   const withdraw = await Withdraw.create({
-    custumerId,
+    customerId: new mongoose.Types.ObjectId(customerId),
     approvedCreditLine,
     availableAmount,
     withdrawAmount,
@@ -46,7 +48,12 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
       runValidators: true,
     }
   ).select("-password");
-
+  console.log("withdrawStatusCustomer", withdrawStatusCustomer);
+  const withdrawcustomerId = withdrawStatusCustomer?.customerId
+  const withdrawAmount = withdrawStatusCustomer?.withdrawAmount
+  const findCustomerAndUpdate = await Custumer.findByIdAndUpdate({ _id: withdrawcustomerId },
+    // {availableBalance:}
+  )
   if (!withdrawStatusCustomer) {
     res.status(404);
     throw new Error("Customer not found");
@@ -59,42 +66,23 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
   });
 });
 
-export const getWeeklyWithdrawalsByCustomerId = asyncHandler(async (req, res) => {
+export const getWithdrwByCustomerId = asyncHandler(async (req, res) => {
   const { customerId } = req.params;
 
-  const result = await Withdraw.aggregate([
-    {
-      $match: {
-        custumerId: customerId,
-      },
-    },
-    {
-      $addFields: {
-        week: { $isoWeek: "$createdAt" },
-        year: { $isoWeekYear: "$createdAt" },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          year: "$year",
-          week: "$week",
-        },
-        totalWithdrawAmount: { $sum: { $toDouble: "$withdrawAmount" } },
-        count: { $sum: 1 },
-        withdrawals: { $push: "$$ROOT" },
-      },
-    },
-    {
-      $sort: {
-        "_id.year": -1,
-        "_id.week": -1,
-      },
-    },
-  ]);
+  const withdrawals = await Withdraw.find({ customerId }).populate({
+    path: 'customerId',
+    select: 'customerName'
+  });
+
+  // flatten the populated customerId object
+  const result = withdrawals.map((withdraw) => ({
+    ...withdraw._doc,
+    customerId: withdraw.customerId?._id,
+    customerName: withdraw.customerId?.customerName
+  }));
 
   res.status(200).json({
-    message: "Weekly withdrawals fetched successfully ✅",
+    message: "All withdrawals fetched successfully ✅",
     result,
   });
 });
