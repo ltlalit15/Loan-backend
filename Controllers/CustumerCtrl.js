@@ -280,7 +280,7 @@ export const getCustomerNames = asyncHandler(async (req, res) => {
 
 export const autoDeductInstallments = asyncHandler(async (req, res) => {
   try {
-    const customers = await Customer.find();
+    const customers = await Customer.find({ role: "customer" });
 
     const now = dayjs();
     let updatedCount = 0;
@@ -289,6 +289,7 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
     for (const customer of customers) {
       const {
         _id,
+        customerName,  // 👈 Added
         totalRepayment,
         installment,
         term_type,
@@ -305,7 +306,7 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
       } else if (term_type === "biweekly") {
         nextDueDate = lastUpdated.add(2, 'week');
       } else {
-        logs.push({ customerId: _id, message: "Invalid term_type" });
+        logs.push({ customerId: _id, customerName, message: "Invalid term_type" }); // 👈 added name
         continue;
       }
 
@@ -326,9 +327,17 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
         });
 
         updatedCount++;
-        logs.push({ customerId: _id, message: `Installment of $${installment} deducted.` });
+        logs.push({
+          customerId: _id,
+          customerName,
+          message: `Installment of $${installment} deducted.`
+        });
       } else {
-        logs.push({ customerId: _id, message: `No payment due today. Next due on ${nextDueDate.format("YYYY-MM-DD")}` });
+        logs.push({
+          customerId: _id,
+          customerName,
+          message: `No payment due today. Next due on ${nextDueDate.format("YYYY-MM-DD")}`
+        });
       }
     }
 
@@ -342,6 +351,7 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error while processing auto deduction" });
   }
 });
+
 
 
 
