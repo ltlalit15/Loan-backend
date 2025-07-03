@@ -32,7 +32,7 @@ const customerSchema = new mongoose.Schema(
     approvedAmount: {
       type: String
     },
-    monthlyInstallment: {
+    installment: {
       type: String
     },
     term_month: {
@@ -48,6 +48,9 @@ const customerSchema = new mongoose.Schema(
       type: String
     },
     remainingRepayment: {
+      type: String
+    },
+    term_type: {
       type: String
     },
     role: {

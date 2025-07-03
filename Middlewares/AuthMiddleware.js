@@ -42,8 +42,8 @@ export const isAdmin = asyncHandler(async (req, res, next) => {
 export const isCustumer = asyncHandler(async (req, res, next) => {
     const { email } = req.user;
     const adminUser = await User.findOne({ email });
-    if (adminUser.role !== "admin") {
-        throw new Error("You are not an admin");
+    if (adminUser.role !== "customer") {
+        throw new Error("You are not an customer");
     } else {
         next();
     }

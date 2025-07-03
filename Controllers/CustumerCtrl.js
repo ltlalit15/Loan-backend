@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../Config/jwtToken.js";
 import cloudinary from "../Config/cloudinary.js";
 import fs from "fs";
+import dayjs from "dayjs";
 
 export const CreateCustumer = asyncHandler(async (req, res) => {
   const {
@@ -113,7 +114,7 @@ export const getCustumers = asyncHandler(async (req, res) => {
   let customers;
 
   if (customerId) {
-    customers = await Customer.find({ _id: customerId, role: "customer" }).select("-password");
+    customers = await Customer.find({ _id: customerId}).select("-password");
   } else {
     customers = await Customer.find({ role: "customer" }).select("-password");
   }
@@ -162,9 +163,10 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     approvedAmount,
     totalRepayment,
     term_month,
-    monthlyInstallment,
+    installment,
     factorRate,
     availBalance,
+    term_type
   } = req.body;
 
   const customer = await Customer.findById(id);
@@ -205,18 +207,19 @@ export const updateCustomer = asyncHandler(async (req, res) => {
   customer.address = address || customer.address;
   customer.creditLine = creditLine || customer.creditLine;
   customer.factorRate = factorRate || customer.factorRate;
+  customer.term_type = term_type || customer.term_type;
   customer.approvedAmount = approvedAmount || customer.approvedAmount;
   customer.totalRepayment = totalRepayment || customer.totalRepayment;
   customer.term_month = term_month || customer.term_month;
   customer.availBalance = availBalance || customer.availBalance;
-  customer.monthlyInstallment = monthlyInstallment || customer.monthlyInstallment;
+  customer.installment = installment || customer.installment;
 
   if (totalRepayment !== undefined) {
     customer.remainingRepayment = totalRepayment;
   }
 
   const updatedCustomer = await customer.save();
-  console.log("updatedCustomer",);
+
   res.status(200).json({
     message: "Customer updated successfully ✅",
     customer: {
@@ -233,9 +236,10 @@ export const updateCustomer = asyncHandler(async (req, res) => {
       approvedAmount: updatedCustomer.approvedAmount,
       totalRepayment: updatedCustomer.totalRepayment,
       term_month: updatedCustomer.term_month,
-      monthlyInstallment: updatedCustomer.monthlyInstallment,
+      installment: updatedCustomer.installment,
       availBalance: updatedCustomer.availBalance,
-      remainingRepayments: updatedCustomer.remainingRepayments,
+      remainingRepayment: updatedCustomer.remainingRepayment,
+      term_type: updatedCustomer.term_type,
     },
   });
 });
@@ -259,7 +263,6 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
   });
 });
 
-
 export const getCustomerNames = asyncHandler(async (req, res) => {
   const customers = await Customer.find({ role: "customer" }, { customerName: 1 });
 
@@ -273,3 +276,67 @@ export const getCustomerNames = asyncHandler(async (req, res) => {
     customers: customerList
   })
 });
+
+export const autoDeductInstallments = asyncHandler(async (req, res) => {
+  try {
+    const customers = await Customer.find();
+
+    const now = dayjs();
+    let updatedCount = 0;
+    let logs = [];
+
+    for (const customer of customers) {
+      const {
+        _id,
+        totalRepayment,
+        installment,
+        term_type,
+        updatedAt
+      } = customer;
+
+      const lastUpdated = dayjs(updatedAt);
+      let nextDueDate;
+
+      if (term_type === "monthly") {
+        nextDueDate = lastUpdated.add(1, 'month');
+      } else if (term_type === "weekly") {
+        nextDueDate = lastUpdated.add(1, 'week');
+      } else if (term_type === "biweekly") {
+        nextDueDate = lastUpdated.add(2, 'week');
+      } else {
+        logs.push({ customerId: _id, message: "Invalid term_type" });
+        continue;
+      }
+
+      if (now.isSame(nextDueDate, 'day')) {
+        const newRepayment = totalRepayment - installment;
+
+        await Customer.findByIdAndUpdate(
+          _id,
+          {
+            totalRepayment: newRepayment > 0 ? newRepayment : 0,
+            updatedAt: now.toDate(),
+          }
+        );
+
+        updatedCount++;
+        logs.push({ customerId: _id, message: `Installment of $${installment} deducted.` });
+      } else {
+        logs.push({ customerId: _id, message: `No payment due today. Next due on ${nextDueDate.format("YYYY-MM-DD")}` });
+      }
+    }
+
+    res.status(200).json({
+      message: `Installments processed for ${updatedCount} customer(s).`,
+      logs,
+    });
+
+  } catch (error) {
+    console.error("Auto Deduction Error:", error);
+    res.status(500).json({ message: "Server error while processing auto deduction" });
+  }
+});
+
+
+
+

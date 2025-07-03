@@ -1,6 +1,7 @@
 // Controllers/WithdrawController.js
 import Withdraw from "../Models/WithdrawModel.js";
 import Custumer from "../Models/CustumerModel.js";
+import Notifiaction from "../Models/NotifiactionModel.js";
 import asyncHandler from "express-async-handler";
 import mongoose from "mongoose";
 
@@ -51,7 +52,6 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
 
   let withdrawStatusCustomer;
 
-  // Find withdraw record first
   const findWithdraw = await Withdraw.findById(id);
   if (!findWithdraw) {
     res.status(404);
@@ -59,50 +59,44 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
   }
 
   if (withdrawStatus === "Approved") {
-    console.log("Approved condition");
-    const CustomeravailableAmount = parseFloat(findWithdraw.availableAmount);
-    const CustomerwithdrawAmount = parseFloat(findWithdraw.withdrawAmount);
-    const CustomerId = findWithdraw.customerId;
+    const availableAmount = parseFloat(findWithdraw.availableAmount);
+    const withdrawAmount = parseFloat(findWithdraw.withdrawAmount);
+    const customerId = findWithdraw.customerId;
 
-    const updatedAvailableAmount = (CustomeravailableAmount - CustomerwithdrawAmount).toFixed(2);
+    const updatedAvailableAmount = Number((availableAmount - withdrawAmount).toFixed(2));
 
-    // Update Withdraw status and availableAmount
     withdrawStatusCustomer = await Withdraw.findByIdAndUpdate(
       id,
       {
         withdrawStatus,
         availableAmount: updatedAvailableAmount,
       },
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).select("-password");
+      { new: true, runValidators: true }
+    );
 
-    // Update Customer available balance
-    await Custumer.findByIdAndUpdate(CustomerId, {
+    await Custumer.findByIdAndUpdate(customerId, {
       availBalance: updatedAvailableAmount,
     });
 
+    await Notifiaction.create({
+      message: `Your withdrawal of $${withdrawAmount} has been approved and processed.`,
+      customerId,
+    });
   } else {
-    console.log("else condition");
-
     withdrawStatusCustomer = await Withdraw.findByIdAndUpdate(
       id,
       { withdrawStatus },
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).select("-password");
+      { new: true, runValidators: true }
+    );
   }
 
   res.status(200).json({
     message: "Withdraw status updated successfully ✅",
-    customerId: withdrawStatusCustomer._id,
+    customerId: withdrawStatusCustomer.customerId,
     withdrawStatus: withdrawStatusCustomer.withdrawStatus,
   });
 });
+
 
 
 
