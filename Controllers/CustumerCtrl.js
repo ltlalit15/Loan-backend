@@ -1,6 +1,7 @@
 import Customer from "../Models/CustumerModel.js";
 import Repayment from "../Models/RepaymentsModel.js";
 import Withdraw from "../Models/WithdrawModel.js";
+import Notifiaction from "../Models/NotifiactionModel.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../Config/jwtToken.js";
@@ -114,7 +115,7 @@ export const getCustumers = asyncHandler(async (req, res) => {
   let customers;
 
   if (customerId) {
-    customers = await Customer.find({ _id: customerId}).select("-password");
+    customers = await Customer.find({ _id: customerId }).select("-password");
   } else {
     customers = await Customer.find({ role: "customer" }).select("-password");
   }
@@ -319,6 +320,11 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
           }
         );
 
+        await Notifiaction.create({
+          message: `Installment of $${installment} deducted.`,
+          custumerId: _id
+        });
+
         updatedCount++;
         logs.push({ customerId: _id, message: `Installment of $${installment} deducted.` });
       } else {
@@ -336,6 +342,7 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error while processing auto deduction" });
   }
 });
+
 
 
 

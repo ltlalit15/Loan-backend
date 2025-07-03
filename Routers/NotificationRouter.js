@@ -7,6 +7,6 @@ import { authMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
-router.post("/getnotification/:customerId", getNotification);
+router.get("/getnotification/:customerId", getNotification);
 
 export default router;
