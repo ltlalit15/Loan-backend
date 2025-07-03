@@ -6,11 +6,10 @@ Funding & Balance Tracker
 
 ---------------------------------------------------------------  Changes    -----------------------------------------------------------
 
-1.means jab bhi custumer login kare aur agar uska loan approve ho jaye to popup dikhana hai 10 % withdrwa ka with amount ke saath aur usse kam kare tab tak dikhana hai ek baar usne request kar di 10% ke liye uske baad na dikhe kya me sahi samgha 
+1. means jab bhi custumer login kare aur agar uska loan approve ho jaye to popup dikhana hai 10 % withdrwa ka with amount ke saath aur usse kam kare tab tak dikhana hai ek baar usne request kar di 10% ke liye uske baad na dikhe kya me sahi samgha 
 
-2."Credit Increase Eligible! ye 50% loan ho jayega tab hi ek baar show hoga in custmor dashbaord
+2. "Credit Increase Eligible! ye 50% loan ho jayega tab hi ek baar show hoga in custmor dashbaord
 
-3. profile update 
 
 4. in dashbaord change date format (UI)
 
@@ -18,11 +17,6 @@ Funding & Balance Tracker
 
 6. remove repyments
 
-7. implment early payoff and implment ACH Auto Debit: Har mahine $2,000 auto-kat raha hai
-
-8. notifcation 
-💸 Payment Reminder: Your next payment of **$525.00** will auto debit on June 30, 2025  EMI
-✅ New Draw Approved: $5,000 has been sent to your bank account on file. Please allow 1–2 business days to arrive. WIthdrwa
 
 9. landybug image (Ui)
 
@@ -55,20 +49,8 @@ tempory suspended active deactive
 
 14. Change "withdrawAmount" to "Requested Amount" and ❌ Rejected → ✅ Reject customer id should be 9 digit
 
-15. 🔹 Outstanding balance dikhna chahiye
-
-🔹 Ab tak kitna pay kiya hai (Paid to Date)
-
-🔹 Total Payback Amount dikhna chahiye
-
-🔹 Discount dikhna chahiye (agar eligible hain)
-
-🔹 And wire instructions milna chahiye
 
 --------------------------------------       Main Change      -----------------------------------------------------------
 
 1. Credit Increase Eligible
-
-2. Auto deduct EMI  - complete 
-
-3. Notification EMI and Withdrwal 
+2. Early Payoff Management
