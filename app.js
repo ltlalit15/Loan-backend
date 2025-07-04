@@ -7,6 +7,7 @@ import RepaymentsRouter from "./Routers/RepaymentsRouter.js";
 import ReportRouter from "./Routers/ReportRouter.js";
 import NotificationRouter from "./Routers/NotificationRouter.js";
 import EarlyPayoffManagmentRouter from "./Routers/EarlyPayoffManagmentRouter.js";
+import SupportRouter from "./Routers/SupportRouter.js";
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use("/api", RepaymentsRouter);
 router.use("/api", ReportRouter);
 router.use("/api", NotificationRouter);
 router.use("/api", EarlyPayoffManagmentRouter);
+router.use("/api", SupportRouter);
 
 export default router;

@@ -41,11 +41,25 @@ export const updateEarlyPayoffStatus = asyncHandler(async (req, res) => {
 
 
 export const getAllEarlyPayoffs = asyncHandler(async (req, res) => {
-  const allRequests = await EarlyPayoff.find().populate("customerId", "customerName email phoneNumber");
+  const { id, customerId } = req.query;
+
+  let filter = {};
+
+  if (id) {
+    filter._id = id;
+  }
+
+  if (customerId) {
+    filter.customerId = customerId;
+  }
+
+  const allRequests = await EarlyPayoff.find(filter).populate(
+    "customerId",
+    "customerName email phoneNumber"
+  );
 
   res.status(200).json({
-    message: "All early payoff requests fetched",
+    message: "Early payoff request(s) fetched",
     data: allRequests,
   });
 });
-
