@@ -3,6 +3,7 @@ import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../Config/jwtToken.js";
 import crypto from "crypto";
+import Withdraw from "../Models/WithdrawModel.js"
 
 export const logins = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -21,11 +22,35 @@ export const logins = asyncHandler(async (req, res) => {
 
   // ✅ Suspended customer check
   if (customer.customerStatus === "Suspended") {
-    res.status(403).
-      json({ message: "Your account is suspended. Please contact admin." });
+    return res.status(403).json({
+      message: "Your account is suspended. Please contact admin.",
+    });
   }
 
   const token = generateToken(customer._id);
+
+  const withdrawals = await Withdraw.find({ customerId: customer._id, withdrawStatus: "Approved" });
+  const findCustomer = await Customer.find({ _id: customer._id });
+console.log("findCustomer",findCustomer);
+  console.log("withdrawals", withdrawals.length);
+
+  let totalWithdrawAmount = 0;
+  let approvedCreditLine = 0;
+  let minimumWithdrawl = false;
+
+  if (withdrawals.length > 0) {
+    withdrawals.forEach((withdraw) => {
+      totalWithdrawAmount += Number(withdraw.withdrawAmount || 0);
+
+      if (!approvedCreditLine && withdraw.approvedCreditLine) {
+        approvedCreditLine = Number(withdraw.approvedCreditLine);
+      }
+    });
+
+    const tenPercent = approvedCreditLine * 0.10;
+    minimumWithdrawl = totalWithdrawAmount >= tenPercent;
+  }
+
 
   res.status(200).json({
     message: "Login successful",
@@ -42,9 +67,13 @@ export const logins = asyncHandler(async (req, res) => {
       panDoc: customer.panDoc,
       role: customer.role,
       token,
+      minimumWithdrawl,
+      requiredMinimumAmount: findCustomer[0]?.approvedAmount * 10 / 100
+
     },
   });
 });
+
 
 export const changePassword = asyncHandler(async (req, res) => {
   const { password } = req.body;
