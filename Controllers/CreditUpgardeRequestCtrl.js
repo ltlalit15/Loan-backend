@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import CreditUpgrade from "../Models/CreditUpgardeRequestModel.js";
 import Customer from "../Models/CustumerModel.js";
 import mongoose from "mongoose";
-import cloudinary from "../utils/cloudinary.js";
+import cloudinary from "../Utils/cloudinary.js";
 
 export const createCreditUpgrade = asyncHandler(async (req, res) => {
   const { customerId, requestedAmount } = req.body;
