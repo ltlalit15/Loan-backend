@@ -30,9 +30,6 @@ export const logins = asyncHandler(async (req, res) => {
   const token = generateToken(customer._id);
 
   const withdrawals = await Withdraw.find({ customerId: customer._id, withdrawStatus: "Approved" });
-  const findCustomer = await Customer.find({ _id: customer._id });
-console.log("findCustomer",findCustomer);
-  console.log("withdrawals", withdrawals.length);
 
   let totalWithdrawAmount = 0;
   let approvedCreditLine = 0;
@@ -41,7 +38,6 @@ console.log("findCustomer",findCustomer);
   if (withdrawals.length > 0) {
     withdrawals.forEach((withdraw) => {
       totalWithdrawAmount += Number(withdraw.withdrawAmount || 0);
-
       if (!approvedCreditLine && withdraw.approvedCreditLine) {
         approvedCreditLine = Number(withdraw.approvedCreditLine);
       }
@@ -51,6 +47,22 @@ console.log("findCustomer",findCustomer);
     minimumWithdrawl = totalWithdrawAmount >= tenPercent;
   }
 
+  // ✅ Credit Increase Eligibility Logic
+  let creditIncrease = false;
+
+  if (
+    customer.totalRepayment &&
+    customer.remainingRepayment &&
+    approvedCreditLine > 0
+  ) {
+    const remainingPercent = (customer.remainingRepayment / customer.totalRepayment) * 100;
+    const totalWithdrawAmountData = customer.totalRepayment- customer.remainingRepayment;
+    const withdrawPercent = (totalWithdrawAmountData / approvedCreditLine) * 100;
+
+    if (remainingPercent <= 50 && withdrawPercent >= 50) {
+      creditIncrease = true;
+    }
+  }
 
   res.status(200).json({
     message: "Login successful",
@@ -68,11 +80,12 @@ console.log("findCustomer",findCustomer);
       role: customer.role,
       token,
       minimumWithdrawl,
-      requiredMinimumAmount: findCustomer[0]?.approvedAmount * 10 / 100
-
+      requiredMinimumAmount: customer.approvedAmount * 10 / 100,
+      creditIncrease, // ✅ NEW FIELD
     },
   });
 });
+
 
 
 export const changePassword = asyncHandler(async (req, res) => {

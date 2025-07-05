@@ -1,14 +1,23 @@
 import asyncHandler from "express-async-handler";
 import CreditUpgrade from "../Models/CreditUpgardeRequestModel.js";
 import Customer from "../Models/CustumerModel.js";
+import mongoose from "mongoose";
+import cloudinary from "../utils/cloudinary.js";
 
-// ✅ Create request
 export const createCreditUpgrade = asyncHandler(async (req, res) => {
   const { customerId, requestedAmount } = req.body;
+
+  let document = "";
+
+  if (req.file) {
+    const result = await cloudinary.uploader.upload(req.file.path);
+    document = result.secure_url;
+  }
 
   const newRequest = await CreditUpgrade.create({
     customerId,
     requestedAmount,
+    document: document,
   });
 
   res.status(201).json({
@@ -17,9 +26,20 @@ export const createCreditUpgrade = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ Get all requests
 export const getAllCreditUpgrades = asyncHandler(async (req, res) => {
-  const data = await CreditUpgrade.find().populate(
+  const { customerId } = req.query;
+
+  const filter = {};
+
+  if (customerId) {
+    if (!mongoose.Types.ObjectId.isValid(customerId)) {
+      res.status(400);
+      throw new Error("Invalid customerId format");
+    }
+    filter.customerId = customerId;
+  }
+
+  const data = await CreditUpgrade.find(filter).populate(
     "customerId",
     "customerName email totalRepayment remainingRepayment"
   );
@@ -44,6 +64,7 @@ export const getAllCreditUpgrades = asyncHandler(async (req, res) => {
       customerName: customer.customerName,
       requestedAmount: item.requestedAmount,
       creditUpgradeStatus: item.creditUpgradeStatus,
+      document: item.document,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
       __v: item.__v,
@@ -52,11 +73,12 @@ export const getAllCreditUpgrades = asyncHandler(async (req, res) => {
   });
 
   res.status(200).json({
-    message: "All credit upgrade requests with repayment percent",
+    message: customerId
+      ? `Credit upgrade requests for customer ${customerId}`
+      : "All credit upgrade requests with repayment percent",
     data: modifiedData,
   });
 });
-
 
 // ✅ Get one by ID
 export const getCreditUpgradeById = asyncHandler(async (req, res) => {
@@ -71,12 +93,10 @@ export const getCreditUpgradeById = asyncHandler(async (req, res) => {
   res.status(200).json({ data: request });
 });
 
-
 export const updateCreditUpgradeStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { creditUpgradeStatus } = req.body;
 
-  // Step 1: Find the Credit Upgrade Request
   const findCustomer = await CreditUpgrade.findById(id);
   if (!findCustomer) {
     res.status(404);
@@ -133,7 +153,6 @@ export const updateCreditUpgradeStatus = asyncHandler(async (req, res) => {
     });
   }
 });
-
 
 // ✅ Delete request
 export const deleteCreditUpgrade = asyncHandler(async (req, res) => {
