@@ -97,62 +97,60 @@ export const updateCreditUpgradeStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { creditUpgradeStatus } = req.body;
 
-  const findCustomer = await CreditUpgrade.findById(id);
-  if (!findCustomer) {
+  const findRequest = await CreditUpgrade.findById(id);
+  if (!findRequest) {
     res.status(404);
     throw new Error("Credit upgrade request not found");
   }
 
-  const customerId = findCustomer?.customerId;
+  const updated = await CreditUpgrade.findByIdAndUpdate(
+    id,
+    { creditUpgradeStatus },
+    { new: true }
+  );
 
-  // Step 2: Get full customer details
-  const customerDetails = await Customer.findById(customerId);
-  if (!customerDetails) {
-    res.status(404);
-    throw new Error("Customer not found");
+  if (creditUpgradeStatus === "Approved") {
+    const requestedAmount = parseFloat(findRequest.requestedAmount);
+
+    const customer = await Customer.findById(updated.customerId);
+    if (!customer) {
+      res.status(404);
+      throw new Error("Customer not found");
+    }
+
+    const currentBalance = parseFloat(customer.availBalance || 0);
+    const currentApproved = parseFloat(customer.approvedAmount || 0);
+    const currentTotalRepayment = parseFloat(customer.totalRepayment || 0);
+    const currentRemainingRepayment = parseFloat(customer.remainingRepayment || 0);
+
+    const factorRate = parseFloat(customer.factorRate || 1);
+    const repaymentAmount = requestedAmount * factorRate;
+
+    // Update fields
+    customer.availBalance = (currentBalance + requestedAmount).toString();
+    customer.approvedAmount = (currentApproved + requestedAmount).toString();
+    customer.totalRepayment = (currentTotalRepayment + repaymentAmount).toFixed(2);
+    customer.remainingRepayment = (currentRemainingRepayment + repaymentAmount).toFixed(2);
+console.log("customer.availBalance",customer.availBalance);
+console.log("customer.approvedAmount",customer.approvedAmount);
+console.log("customer.totalRepayment",customer.totalRepayment);
+console.log("customer.approvedAmount",customer.approvedAmount);
+console.log("customer.remainingRepayment",customer.remainingRepayment);
+    // Optional: recalculate installment if needed
+    // customer.installment = calculateInstallment(...);
+
+    await customer.save();
+
+    console.log("✅ Customer financials updated");
   }
 
-  // Step 3: Eligibility Logic
-  const creditLine = parseFloat(customerDetails.creditLine || 0);
-  const availBalance = parseFloat(customerDetails.availBalance || 0);
-  const totalRepayment = parseFloat(customerDetails.totalRepayment || 0);
-  const remainingRepayment = parseFloat(customerDetails.remainingRepayment || 0);
-
-  // Calculations
-  const fundsUsed = creditLine - availBalance;
-  const amountPaid = totalRepayment - remainingRepayment;
-
-  const percentUsed = (fundsUsed / creditLine) * 100;
-  const percentPaid = (amountPaid / totalRepayment) * 100;
-
-  // Step 4: Check Eligibility
-  if (percentUsed >= 50 && percentPaid >= 50) {
-    // ✅ Eligible - Update the creditUpgradeStatus
-    const updated = await CreditUpgrade.findByIdAndUpdate(
-      id,
-      { creditUpgradeStatus },
-      { new: true }
-    );
-
-    return res.status(200).json({
-      message: "Status updated - customer is eligible",
-      data: updated,
-      eligibility: {
-        percentUsed: percentUsed.toFixed(2),
-        percentPaid: percentPaid.toFixed(2),
-      },
-    });
-  } else {
-    // ❌ Not eligible
-    return res.status(400).json({
-      message: "Customer is not eligible for credit upgrade",
-      reason: {
-        percentUsed: percentUsed.toFixed(2),
-        percentPaid: percentPaid.toFixed(2),
-      },
-    });
-  }
+  res.status(200).json({
+    message: "Credit upgrade status updated successfully",
+    data: updated,
+  });
 });
+
+
 
 // ✅ Delete request
 export const deleteCreditUpgrade = asyncHandler(async (req, res) => {

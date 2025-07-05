@@ -56,12 +56,22 @@ export const logins = asyncHandler(async (req, res) => {
     approvedCreditLine > 0
   ) {
     const remainingPercent = (customer.remainingRepayment / customer.totalRepayment) * 100;
-    const totalWithdrawAmountData = customer.totalRepayment- customer.remainingRepayment;
+    const totalWithdrawAmountData = customer.totalRepayment - customer.remainingRepayment;
     const withdrawPercent = (totalWithdrawAmountData / approvedCreditLine) * 100;
 
     if (remainingPercent <= 50 && withdrawPercent >= 50) {
       creditIncrease = true;
     }
+  }
+
+  // ✅ If admin, get total customer count
+  let totalCustomers = 0;
+  let pendingRequest = 0;
+  let approvedRequest = 0;
+  if (customer.role === "admin") {
+    totalCustomers = await Customer.countDocuments();
+    pendingRequest = await Withdraw.countDocuments({ withdrawStatus: 'pending' })
+    approvedRequest = await Withdraw.countDocuments({ withdrawStatus: 'Approved' })
   }
 
   res.status(200).json({
@@ -81,10 +91,12 @@ export const logins = asyncHandler(async (req, res) => {
       token,
       minimumWithdrawl,
       requiredMinimumAmount: customer.approvedAmount * 10 / 100,
-      creditIncrease, // ✅ NEW FIELD
+      creditIncrease,
+      ...(customer.role === "admin" && { totalCustomers, pendingRequest, approvedRequest }), // ✅ only include if admin
     },
   });
 });
+
 
 
 
