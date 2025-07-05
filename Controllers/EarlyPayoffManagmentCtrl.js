@@ -1,13 +1,32 @@
 import EarlyPayoff from "../Models/EarlyPayoffManagmentModel.js";
+import Custumer from "../Models/CustumerModel.js";
 
 import asyncHandler from "express-async-handler";
 
 export const earlyPayoffManage = asyncHandler(async (req, res) => {
-  const { customerId, earlyPayAmount, discount, earlyPayoffStatus } = req.body;
+  const { customerId, earlyPayAmount, discount } = req.body;
+
+  const customer = await Custumer.findById(customerId);
+  if (!customer) {
+    return res.status(404).json({ message: "Customer not found" });
+  }
+
+  const totalRepayment = parseFloat(customer.totalRepayment);
+  const paidAmount = parseFloat(earlyPayAmount);
+
+  let earlyPayoffStatus = "";
+
+  if (paidAmount >= totalRepayment) {
+    earlyPayoffStatus = "100% Paid";
+  } else if (paidAmount >= totalRepayment * 0.5) {
+    earlyPayoffStatus = "50% Paid";
+  } else {
+    earlyPayoffStatus = "Less than 50% Paid";
+  }
 
   const newEarlyPayoff = await EarlyPayoff.create({
     customerId,
-    earlyPayAmount,
+    earlyPayAmount: paidAmount,
     discount,
     earlyPayoffStatus,
   });

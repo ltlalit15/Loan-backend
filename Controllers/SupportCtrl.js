@@ -2,9 +2,9 @@ import Contact from "../Models/SupportModel.js";
 import asyncHandler from "express-async-handler";
 
 export const createContact = asyncHandler(async (req, res) => {
-  const { name, phoneNumber, email, subject, message } = req.body;
+  const { name, email, subject, message } = req.body;
 
-  const newContact = await Contact.create({ name, phoneNumber, email, subject, message });
+  const newContact = await Contact.create({ name, email, subject, message });
   res.status(201).json({ message: "Contact saved", data: newContact });
 });
 
