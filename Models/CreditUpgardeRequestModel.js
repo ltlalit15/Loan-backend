@@ -9,6 +9,9 @@ const creditUpgradeSchema = new mongoose.Schema({
   requestedAmount: {
     type: String,
   },
+  document: {
+    type: String,
+  },
   creditUpgradeStatus: {
     type: String,
     default: "pending",
