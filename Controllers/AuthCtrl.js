@@ -69,7 +69,7 @@ export const logins = asyncHandler(async (req, res) => {
   let pendingRequest = 0;
   let approvedRequest = 0;
   if (customer.role === "admin") {
-    totalCustomers = await Customer.countDocuments();
+    totalCustomers = await Customer.countDocuments({role:'customer'});
     pendingRequest = await Withdraw.countDocuments({ withdrawStatus: 'pending' })
     approvedRequest = await Withdraw.countDocuments({ withdrawStatus: 'Approved' })
   }
