@@ -108,8 +108,6 @@ export const approveEarlyPayoff = asyncHandler(async (req, res) => {
   });
 });
 
-
-
 export const getAllEarlyPayoffs = asyncHandler(async (req, res) => {
   const { id, customerId } = req.query;
 
