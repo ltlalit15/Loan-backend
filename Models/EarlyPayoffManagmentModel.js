@@ -12,6 +12,9 @@ const earlyPayoffSchema = new mongoose.Schema({
   discount: {
     type: String,
   },
+  discountAmount: {
+    type: String,
+  },
   earlyPayoffStatus: {
     type: String,
     default: "pending"

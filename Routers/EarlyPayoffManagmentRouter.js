@@ -1,16 +1,16 @@
 import express from "express";
 import {
-    earlyPayoffManage,
+    createEarlyPayoffRequest,
     getAllEarlyPayoffs,
-    updateEarlyPayoffStatus
+    approveEarlyPayoff
 } from "../Controllers/EarlyPayoffManagmentCtrl.js";
 
 import { authMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
-router.post("/earlyPayoff", earlyPayoffManage);
-router.patch("/updateEarlyPayoffStatus/:id", authMiddleware, updateEarlyPayoffStatus);
+router.post("/earlyPayoff", createEarlyPayoffRequest);
+router.patch("/updateEarlyPayoffStatus/:id", approveEarlyPayoff);
 router.get("/getAllEarlyPayoffs", getAllEarlyPayoffs);
 
 export default router;

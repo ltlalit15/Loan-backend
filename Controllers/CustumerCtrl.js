@@ -306,20 +306,25 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
       } else if (term_type === "biweekly") {
         nextDueDate = lastUpdated.add(2, 'week');
       } else {
-        logs.push({ customerId: _id, customerName, message: "Invalid term_type" }); // 👈 added name
+        logs.push({ customerId: _id, customerName, message: "Invalid term_type" });
         continue;
       }
 
       if (now.isSame(nextDueDate, 'day')) {
-        const newRepayment = totalRepayment - installment;
+
+        const remainingRepayment = parseFloat(customer.remainingRepayment);
+        const installmentAmount = parseFloat(customer.installment);
+
+        const newRemaining = remainingRepayment - installmentAmount;
 
         await Customer.findByIdAndUpdate(
           _id,
           {
-            totalRepayment: newRepayment > 0 ? newRepayment : 0,
-            updatedAt: now.toDate(),
+            remainingRepayment: newRemaining > 0 ? newRemaining : 0,
+            lastInstallmentDate: now.toDate(),
           }
         );
+
 
         await Notifiaction.create({
           message: `Installment of $${installment} deducted.`,
