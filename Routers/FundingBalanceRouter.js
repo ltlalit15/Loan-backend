@@ -1,12 +1,12 @@
 import express from "express";
 import {
-    getReport
-} from "../Controllers/ReportCtrl.js";
+    FundingBalance
+} from "../Controllers/FundingBalanceCtrl.js";
 
 import { authMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
-router.get("/report",  getReport);
+router.get("/getfundingbalance",  FundingBalance);
 
 export default router;

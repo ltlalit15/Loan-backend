@@ -6,11 +6,21 @@ export const getReport = asyncHandler(async (req, res) => {
   const { customerId, reportType, startDate, endDate } = req.query;
 
   let dateFilter = {};
-  if (startDate && endDate) {
-    dateFilter.createdAt = {
-      $gte: new Date(startDate),
-      $lte: new Date(endDate),
-    };
+
+  if (startDate || endDate) {
+    dateFilter.createdAt = {};
+
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      dateFilter.createdAt.$gte = start;
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter.createdAt.$lte = end;
+    }
   }
 
   let customerFilter = {};
@@ -26,12 +36,17 @@ export const getReport = asyncHandler(async (req, res) => {
   let result;
 
   switch (reportType) {
-    case "Draw History":
+    case "DrawHistory":
+      filters.withdrawStatus = "Approved";
       result = await Withdraw.find(filters).sort({ createdAt: -1 });
       break;
 
-    case "Repayment Logs":
+    case "RepaymentLogs":
       result = await Repayment.find(filters).sort({ createdAt: -1 });
+      break;
+
+    case "FundingRequest":
+      result = await Withdraw.find(filters).sort({ createdAt: -1 });
       break;
 
     default:

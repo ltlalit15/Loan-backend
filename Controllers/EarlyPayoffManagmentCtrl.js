@@ -11,18 +11,23 @@ export const earlyPayoffManage = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Customer not found" });
   }
 
+  console.log("customer?.updatedAt== new Date()", customer?.updatedAt == new Date());
+  // if (customer?.updatedAt== new Date()) {
+
+  // }
+
   const totalRepayment = parseFloat(customer.totalRepayment);
   const paidAmount = parseFloat(earlyPayAmount);
 
-  let earlyPayoffStatus = "";
+  // let earlyPayoffStatus = "";
 
-  if (paidAmount >= totalRepayment) {
-    earlyPayoffStatus = "100% Paid";
-  } else if (paidAmount >= totalRepayment * 0.5) {
-    earlyPayoffStatus = "50% Paid";
-  } else {
-    earlyPayoffStatus = "Less than 50% Paid";
-  }
+  // if (paidAmount >= totalRepayment) {
+  //   earlyPayoffStatus = "100% Paid";
+  // } else if (paidAmount >= totalRepayment * 0.5) {
+  //   earlyPayoffStatus = "50% Paid";
+  // } else {
+  //   earlyPayoffStatus = "Less than 50% Paid";
+  // }
 
   const newEarlyPayoff = await EarlyPayoff.create({
     customerId,
