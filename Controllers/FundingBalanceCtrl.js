@@ -1,63 +1,31 @@
 import Repayment from "../Models/RepaymentsModel.js";
 import Withdraw from "../Models/WithdrawModel.js";
 import asyncHandler from "express-async-handler";
+import Customer from "../Models/CustumerModel.js";
 
 export const FundingBalance = asyncHandler(async (req, res) => {
-  // Withdrawals
-  const withdrawals = await Withdraw.aggregate([
-    { $match: { withdrawStatus: "Approved" } },
-    {
-      $addFields: {
-        amount: { $toDouble: "$withdrawAmount" },
-        type: "Draw",
-        date: "$createdAt"
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-        amount: 1,
-        type: 1,
-        date: 1
-      }
-    }
-  ]);
+  // Find all approved withdrawals
+  const withdrawals = await Withdraw.find({ withdrawStatus: "Approved" });
+  const findCustomer = await Customer.find();
 
-  // Repayments
-  const repayments = await Repayment.aggregate([
-    { $match: { repaymentStatus: "Paid" } },
-    {
-      $addFields: {
-        amount: { $toDouble: "$repaymentAmount" },
-        type: "Repayment",
-        date: "$createdAt"
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-        amount: 1,
-        type: 1,
-        date: 1
-      }
-    }
-  ]);
+  // Calculate total amount drawn
+  const totalDrawn = withdrawals.reduce((acc, curr) => acc + Number(curr.withdrawAmount || 0), 0);
 
-  // Totals
-  const totalDrawn = withdrawals.reduce((sum, t) => sum + t.amount, 0);
-  const totalRepayments = repayments.reduce((sum, t) => sum + t.amount, 0);
-  const remainingBalance = totalDrawn - totalRepayments;
+  // Find all repayments
+  const repayments = await Repayment.find({});
 
-  // Merge and sort logs
-  const transactionLog = [...withdrawals, ...repayments].sort(
-    (a, b) => new Date(a.date) - new Date(b.date)
-  );
+  // Calculate total repayments
+  const totalRepayments = repayments.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+
+  // Remaining balance = totalDrawn - totalRepayment
+  const remainingBalance = findCustomer.reduce((acc, curr) => acc + Number(curr.remainingRepayment || 0), 0);
 
   res.status(200).json({
     success: true,
-    totalDrawn,
-    totalRepayments,
-    remainingBalance,
-    transactionLog
+    data: {
+      totalDrawn,
+      remainingBalance:remainingBalance,
+      totalRepayments
+    }
   });
 });
