@@ -141,13 +141,13 @@ export const createEarlyPayoffRequest = asyncHandler(async (req, res) => {
   }
 
   const loanApprovedDate = moment(customer.updatedAt);
-  const today = moment(); 
+  const today = moment();
   const daysSinceApproval = today.diff(loanApprovedDate, 'days');
 
   const newRequest = await EarlyPayoff.create({
     customerId,
     earlyPayAmount,
-    requestDate: daysSinceApproval 
+    requestDate: daysSinceApproval
   });
 
   res.status(201).json({
@@ -173,6 +173,16 @@ export const approveEarlyPayoff = asyncHandler(async (req, res) => {
 
   if (!payoff) {
     return res.status(404).json({ message: "Early payoff request not found." });
+  }
+
+  if (earlyPayoffStatus === "Approved") {
+    const customerId = payoff.customerId;
+    await Custumer.findByIdAndUpdate(customerId, {
+      availBalance: "0.00",
+      remainingRepayment: "0.00",
+      installment: "0.00",
+      totalRepayment: "0.00",
+    });
   }
 
   res.status(200).json({

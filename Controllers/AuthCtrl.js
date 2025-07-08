@@ -73,7 +73,6 @@ export const logins = asyncHandler(async (req, res) => {
     pendingRequest = await Withdraw.countDocuments({ withdrawStatus: 'pending' })
     approvedRequest = await Withdraw.countDocuments({ withdrawStatus: 'Approved' })
   }
-  console.log("customer", customer);
   res.status(200).json({
     message: "Login successful",
     customer: {
@@ -97,9 +96,6 @@ export const logins = asyncHandler(async (req, res) => {
     },
   });
 });
-
-
-
 
 export const changePassword = asyncHandler(async (req, res) => {
   const { password } = req.body;
