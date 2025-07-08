@@ -79,7 +79,7 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
     });
 
     await Notifiaction.create({
-      message: `Your withdrawal of $${withdrawAmount} has been approved and processed.`,
+      message: `withdrawal of $${withdrawAmount} has been approved and processed.`,
       customerId,
     });
   } else {

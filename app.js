@@ -10,6 +10,7 @@ import EarlyPayoffManagmentRouter from "./Routers/EarlyPayoffManagmentRouter.js"
 import SupportRouter from "./Routers/SupportRouter.js";
 import CreditUpgardeRequestRouter from "./Routers/CreditUpgardeRequestRouter.js";
 import FundingBalanceRouter from "./Routers/FundingBalanceRouter.js";
+import DiscountRouter from "./Routers/DiscountRouter.js";
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use("/api", EarlyPayoffManagmentRouter);
 router.use("/api", SupportRouter);
 router.use("/api", CreditUpgardeRequestRouter);
 router.use("/api", FundingBalanceRouter);
+router.use("/api", DiscountRouter);
 
 export default router;

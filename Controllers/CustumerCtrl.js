@@ -257,6 +257,7 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
 
   await Repayment.deleteMany({ customerId: id });
   await Withdraw.deleteMany({ customerId: id });
+  await Notifiaction.deleteMany({customerId:id})
 
   res.status(200).json({
     message: "Customer deleted successfully",
@@ -289,7 +290,7 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
     for (const customer of customers) {
       const {
         _id,
-        customerName,  // 👈 Added
+        customerName,  
         totalRepayment,
         installment,
         term_type,

@@ -15,10 +15,14 @@ const earlyPayoffSchema = new mongoose.Schema({
   discountAmount: {
     type: String,
   },
+  requestDate: {
+    type: String,
+  },
   earlyPayoffStatus: {
     type: String,
     default: "pending"
-  }
+  },
+  
 }, {
   timestamps: true
 });

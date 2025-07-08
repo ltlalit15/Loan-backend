@@ -69,11 +69,11 @@ export const logins = asyncHandler(async (req, res) => {
   let pendingRequest = 0;
   let approvedRequest = 0;
   if (customer.role === "admin") {
-    totalCustomers = await Customer.countDocuments({role:'customer'});
+    totalCustomers = await Customer.countDocuments({ role: 'customer' });
     pendingRequest = await Withdraw.countDocuments({ withdrawStatus: 'pending' })
     approvedRequest = await Withdraw.countDocuments({ withdrawStatus: 'Approved' })
   }
-
+  console.log("customer", customer);
   res.status(200).json({
     message: "Login successful",
     customer: {
@@ -88,6 +88,7 @@ export const logins = asyncHandler(async (req, res) => {
       gstDoc: customer.gstDoc,
       panDoc: customer.panDoc,
       role: customer.role,
+      remainingRepayment: customer.remainingRepayment,
       token,
       minimumWithdrawl,
       requiredMinimumAmount: customer.approvedAmount * 10 / 100,
