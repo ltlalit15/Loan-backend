@@ -12,7 +12,7 @@ const router = express.Router();
 router.post("/discount", createDiscount);
 router.get("/discount", getAllDiscounts);
 router.get("/costomerearlypay", costomerearlypay);
-router.put("/discount/:customerId", updateDiscount);
-router.delete("/discount/:customerId", deleteDiscount);
+router.put("/discount/:id", updateDiscount);
+router.delete("/discount/:id", deleteDiscount);
 
 export default router;

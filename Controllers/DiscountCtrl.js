@@ -14,8 +14,6 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
     res.status(200).json({ success: true, data });
 });
 
-
-
 export const costomerearlypay = asyncHandler(async (req, res) => {
   const { customerId } = req.query;
 
@@ -76,10 +74,11 @@ export const createDiscount = asyncHandler(async (req, res) => {
 });
 
 export const updateDiscount = asyncHandler(async (req, res) => {
-    const { customerId } = req.params;
+    const { id } = req.params;
 
     const updated = await DiscountModel.findOneAndUpdate(
-        { customerId },
+       { _id: id }
+,
         { $set: req.body },
         { new: true }
     );
@@ -92,9 +91,9 @@ export const updateDiscount = asyncHandler(async (req, res) => {
 });
 
 export const deleteDiscount = asyncHandler(async (req, res) => {
-    const { customerId } = req.params;
+    const { id } = req.params;
 
-    const deleted = await DiscountModel.findOneAndDelete({ customerId });
+    const deleted = await DiscountModel.findOneAndDelete({ _id: id });
 
     if (!deleted) {
         return res.status(404).json({ success: false, message: "No discount found to delete for this customer." });
