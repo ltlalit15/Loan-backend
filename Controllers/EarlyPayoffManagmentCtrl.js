@@ -175,12 +175,10 @@ export const approveEarlyPayoff = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Early payoff request not found." });
   }
 
-  if (earlyPayoffStatus === "Approved") {
+  if (earlyPayoffStatus === "approved") {
     const customerId = payoff.customerId;
     await Custumer.findByIdAndUpdate(customerId, {
-      availBalance: "0.00",
       remainingRepayment: "0.00",
-      installment: "0.00",
       totalRepayment: "0.00",
     });
   }
