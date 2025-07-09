@@ -14,6 +14,7 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
     filter.customerId = new mongoose.Types.ObjectId(customerId);
   }
 
+  // ✅ Include approvedAmount & totalRepayment in populate
   const data = await DiscountModel.find(filter).populate(
     "customerId",
     "customerName email approvedAmount totalRepayment"
@@ -33,6 +34,7 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
       const TenDicountAmount = (factorRateAmount * discountTen) / 100;
       const FiveDicountAmount = (factorRateAmount * discountFive) / 100;
 
+      // Calculate Discount Ten Status
       let discountTenStatus = "N/A";
       if (item.startDateTen && item.endDateTen) {
         if (today > item.endDateTen) {
@@ -42,6 +44,7 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         }
       }
 
+      // Calculate Discount Five Status
       let discountFiveStatus = "N/A";
       if (item.startDateFive && item.endDateFive) {
         if (today > item.endDateFive) {
@@ -51,6 +54,7 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         }
       }
 
+      // ✅ Update status in DB
       await DiscountModel.findByIdAndUpdate(
         item._id,
         {
@@ -60,6 +64,14 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         { new: true }
       );
 
+      let finalTenAmount = TenDicountAmount;
+      let finalFiveAmount = FiveDicountAmount;
+
+      if (item.discountStatus === "Used") {
+        finalTenAmount = 0;
+        finalFiveAmount = 0;
+      }
+
       return {
         customerId: item.customerId?._id,
         _id: item?._id,
@@ -68,24 +80,21 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         discountTen: item.discountTen,
         startDateTen: item.startDateTen,
         endDateTen: item.endDateTen,
-        discountTenStatus,
         discountFive: item.discountFive,
         startDateFive: item.startDateFive,
         endDateFive: item.endDateFive,
-        discountFiveStatus,
-        earlyPayoffStatus: item.earlyPayoffStatus,
+        discountStatus: item.discountStatus,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
-        TenDicountAmount: TenDicountAmount.toFixed(2),
-        FiveDicountAmount: FiveDicountAmount.toFixed(2),
+        TenDicountAmount: finalTenAmount.toFixed(2),
+        FiveDicountAmount: finalFiveAmount.toFixed(2),
       };
+
     })
   );
 
   res.status(200).json({ success: true, data: result });
 });
-
-
 
 export const costomerearlypay = asyncHandler(async (req, res) => {
   const { customerId } = req.query;

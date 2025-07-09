@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post("/login", logins);
 router.get("/custumers", authMiddleware, getCustumers);
-
+// createcustomer
 router.post(
   "/createcustumer",
   upload.fields([

@@ -188,8 +188,7 @@ export const approveEarlyPayoff = asyncHandler(async (req, res) => {
     await Discount.updateMany(
       { customerId },
       {
-        discountFiveStatus: "Used",
-        discountTenStatus: "Used"
+        discountStatus: "Used"
       }
     );
   }

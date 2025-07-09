@@ -12,11 +12,7 @@ const DiscountSchema = new mongoose.Schema({
         type: String,
         default: "pending"
     },
-    discountTenStatus: {
-        type: String,
-        default: "Active",
-    },
-    discountFiveStatus: {
+    discountStatus: {
         type: String,
         default: "Active",
     },
