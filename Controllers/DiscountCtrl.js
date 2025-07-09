@@ -14,25 +14,78 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
     filter.customerId = new mongoose.Types.ObjectId(customerId);
   }
 
-  const data = await DiscountModel.find(filter).populate("customerId", "customerName email");
+  const data = await DiscountModel.find(filter).populate(
+    "customerId",
+    "customerName email approvedAmount totalRepayment"
+  );
 
-  const result = data.map((item) => ({
-    customerId: item.customerId?._id,
-    customerName: item.customerId?.customerName,
-    email: item.customerId?.email,
-    discountTen: item.discountTen,
-    startDateTen: item.startDateTen,
-    endDateTen: item.endDateTen,
-    discountFive: item.discountFive,
-    startDateFive: item.startDateFive,
-    endDateFive: item.endDateFive,
-    earlyPayoffStatus: item.earlyPayoffStatus,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-  }));
+  const today = new Date();
+
+  const result = await Promise.all(
+    data.map(async (item) => {
+      const approvedAmount = parseFloat(item.customerId?.approvedAmount || 0);
+      const totalRepayment = parseFloat(item.customerId?.totalRepayment || 0);
+      const factorRateAmount = totalRepayment - approvedAmount;
+
+      const discountTen = parseFloat(item.discountTen || 0);
+      const discountFive = parseFloat(item.discountFive || 0);
+
+      const TenDicountAmount = (factorRateAmount * discountTen) / 100;
+      const FiveDicountAmount = (factorRateAmount * discountFive) / 100;
+
+      let discountTenStatus = "N/A";
+      if (item.startDateTen && item.endDateTen) {
+        if (today > item.endDateTen) {
+          discountTenStatus = "Expired";
+        } else if (today >= item.startDateTen && today <= item.endDateTen) {
+          discountTenStatus = "Active";
+        }
+      }
+
+      let discountFiveStatus = "N/A";
+      if (item.startDateFive && item.endDateFive) {
+        if (today > item.endDateFive) {
+          discountFiveStatus = "Expired";
+        } else if (today >= item.startDateFive && today <= item.endDateFive) {
+          discountFiveStatus = "Active";
+        }
+      }
+
+      await DiscountModel.findByIdAndUpdate(
+        item._id,
+        {
+          discountTenStatus,
+          discountFiveStatus,
+        },
+        { new: true }
+      );
+
+      return {
+        customerId: item.customerId?._id,
+        _id: item?._id,
+        customerName: item.customerId?.customerName,
+        email: item.customerId?.email,
+        discountTen: item.discountTen,
+        startDateTen: item.startDateTen,
+        endDateTen: item.endDateTen,
+        discountTenStatus,
+        discountFive: item.discountFive,
+        startDateFive: item.startDateFive,
+        endDateFive: item.endDateFive,
+        discountFiveStatus,
+        earlyPayoffStatus: item.earlyPayoffStatus,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        TenDicountAmount: TenDicountAmount.toFixed(2),
+        FiveDicountAmount: FiveDicountAmount.toFixed(2),
+      };
+    })
+  );
 
   res.status(200).json({ success: true, data: result });
 });
+
+
 
 export const costomerearlypay = asyncHandler(async (req, res) => {
   const { customerId } = req.query;
@@ -67,7 +120,7 @@ export const costomerearlypay = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    customerName:customer.customerName,
+    customerName: customer.customerName,
     customerId,
     creditApprovedDate: updatedAt,
     appliedDiscount,
@@ -77,46 +130,46 @@ export const costomerearlypay = asyncHandler(async (req, res) => {
 });
 
 export const createDiscount = asyncHandler(async (req, res) => {
-    const { discountTen, startDateTen, endDateTen, discountFive, startDateFive, endDateFive, customerId } = req.body;
+  const { discountTen, startDateTen, endDateTen, discountFive, startDateFive, endDateFive, customerId } = req.body;
 
-    const result = await DiscountModel.create({
-        discountTen,
-        startDateTen,
-        endDateTen,
-        discountFive,
-        startDateFive,
-        endDateFive,
-        customerId
-    });
+  const result = await DiscountModel.create({
+    discountTen,
+    startDateTen,
+    endDateTen,
+    discountFive,
+    startDateFive,
+    endDateFive,
+    customerId
+  });
 
-    res.status(201).json({ success: true, message: "Discount created successfully", data: result });
+  res.status(201).json({ success: true, message: "Discount created successfully", data: result });
 });
 
 export const updateDiscount = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const updated = await DiscountModel.findOneAndUpdate(
-       { _id: id }
-,
-        { $set: req.body },
-        { new: true }
-    );
+  const updated = await DiscountModel.findOneAndUpdate(
+    { _id: id }
+    ,
+    { $set: req.body },
+    { new: true }
+  );
 
-    if (!updated) {
-        return res.status(404).json({ success: false, message: "Discount not found for this customer." });
-    }
+  if (!updated) {
+    return res.status(404).json({ success: false, message: "Discount not found for this customer." });
+  }
 
-    res.status(200).json({ success: true, message: "Discount updated successfully", data: updated });
+  res.status(200).json({ success: true, message: "Discount updated successfully", data: updated });
 });
 
 export const deleteDiscount = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const deleted = await DiscountModel.findOneAndDelete({ _id: id });
+  const deleted = await DiscountModel.findOneAndDelete({ _id: id });
 
-    if (!deleted) {
-        return res.status(404).json({ success: false, message: "No discount found to delete for this customer." });
-    }
+  if (!deleted) {
+    return res.status(404).json({ success: false, message: "No discount found to delete for this customer." });
+  }
 
-    res.status(200).json({ success: true, message: "Discount deleted successfully" });
+  res.status(200).json({ success: true, message: "Discount deleted successfully" });
 });

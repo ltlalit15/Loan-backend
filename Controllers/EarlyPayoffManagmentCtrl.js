@@ -1,6 +1,7 @@
 import EarlyPayoff from "../Models/EarlyPayoffManagmentModel.js";
 import Custumer from "../Models/CustumerModel.js";
 import Repayment from "../Models/RepaymentsModel.js";
+import Discount from "../Models/DiscountModel.js";
 import asyncHandler from "express-async-handler";
 import moment from "moment";
 
@@ -175,12 +176,22 @@ export const approveEarlyPayoff = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Early payoff request not found." });
   }
 
+  let customerId;
   if (earlyPayoffStatus === "approved") {
-    const customerId = payoff.customerId;
+    customerId = payoff.customerId;
+
     await Custumer.findByIdAndUpdate(customerId, {
       remainingRepayment: "0.00",
       totalRepayment: "0.00",
     });
+
+    await Discount.updateMany(
+      { customerId },
+      {
+        discountFiveStatus: "Used",
+        discountTenStatus: "Used"
+      }
+    );
   }
 
   res.status(200).json({

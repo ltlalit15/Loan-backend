@@ -25,7 +25,9 @@ export const FundingBalance = asyncHandler(async (req, res) => {
     availableAmount: item.availableAmount,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
-    customerName: item.customerId?.customerName || "Unknown"
+    customerName: item.customerId?.customerName || "Unknown",
+    customerId: item.customerId?._id || "Unknown"
+
   }));
 
   const formattedRepayments = repayments.map((item) => ({
@@ -35,7 +37,8 @@ export const FundingBalance = asyncHandler(async (req, res) => {
     repaymentMode: item.repaymentMode,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
-    customerName: item.customerId?.customerName || "Unknown"
+    customerName: item.customerId?.customerName || "Unknown",
+    customerId: item.customerId?._id || "Unknown"
   }));
 
   const mergedData = [...formattedWithdrawals, ...formattedRepayments];

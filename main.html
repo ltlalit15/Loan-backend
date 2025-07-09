@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Time of Birth Picker</title>
+</head>
+<body>
+  <label for="tob">Select Time of Birth:</label>
+  <select id="tob">
+    <!-- Hours 00 to 23 -->
+    <script>
+      const select = document.getElementById("tob");
+      for (let hour = 0; hour < 24; hour++) {
+        const hourStr = hour.toString().padStart(2, '0');
+        [0, 15, 30, 45].forEach(min => {
+          const minStr = min.toString().padStart(2, '0');
+          const option = document.createElement("option");
+          option.value = `${hourStr}:${minStr}`;
+          option.text = `${hourStr}:${minStr}`;
+          select.appendChild(option);
+        });
+      }
+    </script>
+  </select>
+</body>
+</html>

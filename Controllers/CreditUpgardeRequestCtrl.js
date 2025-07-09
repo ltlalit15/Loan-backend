@@ -123,7 +123,7 @@ export const updateCreditUpgradeStatus = asyncHandler(async (req, res) => {
     const currentTotalRepayment = parseFloat(customer.totalRepayment || 0);
     const currentRemainingRepayment = parseFloat(customer.remainingRepayment || 0);
 
-    const factorRate = parseFloat(customer.factorRate || 1);
+    const factorRate = parseFloat(customer.factorRate);
     const repaymentAmount = requestedAmount * factorRate;
 
     // Update fields
@@ -136,8 +136,7 @@ console.log("customer.approvedAmount",customer.approvedAmount);
 console.log("customer.totalRepayment",customer.totalRepayment);
 console.log("customer.approvedAmount",customer.approvedAmount);
 console.log("customer.remainingRepayment",customer.remainingRepayment);
-    // Optional: recalculate installment if needed
-    // customer.installment = calculateInstallment(...);
+
 
     await customer.save();
 
