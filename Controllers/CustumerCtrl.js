@@ -1,6 +1,10 @@
 import Customer from "../Models/CustumerModel.js";
+import Discount from "../Models/DiscountModel.js";
 import Repayment from "../Models/RepaymentsModel.js";
 import Withdraw from "../Models/WithdrawModel.js";
+import EarlyPayoff from "../Models/EarlyPayoffManagmentModel.js";
+import CreditUpgardeRequest from "../Models/CreditUpgardeRequestModel.js";
+import Support from "../Models/SupportModel.js";
 import Notifiaction from "../Models/NotifiactionModel.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
@@ -257,7 +261,11 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
 
   await Repayment.deleteMany({ customerId: id });
   await Withdraw.deleteMany({ customerId: id });
-  await Notifiaction.deleteMany({customerId:id})
+  await Notifiaction.deleteMany({ customerId: id });
+  await Support.deleteMany({ customerId: id });
+  await CreditUpgardeRequest.deleteMany({ customerId: id });
+  await Discount.deleteMany({ customerId: id });
+  await EarlyPayoff.deleteMany({ customerId: id });
 
   res.status(200).json({
     message: "Customer deleted successfully",
@@ -290,7 +298,7 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
     for (const customer of customers) {
       const {
         _id,
-        customerName,  
+        customerName,
         totalRepayment,
         installment,
         term_type,
