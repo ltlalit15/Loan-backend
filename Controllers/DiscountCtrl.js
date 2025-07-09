@@ -1,17 +1,37 @@
 import DiscountModel from "../Models/DiscountModel.js";
 import Custumer from "../Models/CustumerModel.js";
 import asyncHandler from "express-async-handler";
+import mongoose from "mongoose";
 
 export const getAllDiscounts = asyncHandler(async (req, res) => {
-    const { customerId } = req.query;
+  const { customerId } = req.query;
 
-    let filter = {};
-    if (customerId) {
-        filter.customerId = customerId;
+  let filter = {};
+  if (customerId) {
+    if (!mongoose.Types.ObjectId.isValid(customerId)) {
+      return res.status(400).json({ success: false, message: "Invalid customerId format" });
     }
-    const data = await DiscountModel.find(filter).populate("customerId", "customerName email");
+    filter.customerId = new mongoose.Types.ObjectId(customerId);
+  }
 
-    res.status(200).json({ success: true, data });
+  const data = await DiscountModel.find(filter).populate("customerId", "customerName email");
+
+  const result = data.map((item) => ({
+    customerId: item.customerId?._id,
+    customerName: item.customerId?.customerName,
+    email: item.customerId?.email,
+    discountTen: item.discountTen,
+    startDateTen: item.startDateTen,
+    endDateTen: item.endDateTen,
+    discountFive: item.discountFive,
+    startDateFive: item.startDateFive,
+    endDateFive: item.endDateFive,
+    earlyPayoffStatus: item.earlyPayoffStatus,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }));
+
+  res.status(200).json({ success: true, data: result });
 });
 
 export const costomerearlypay = asyncHandler(async (req, res) => {
