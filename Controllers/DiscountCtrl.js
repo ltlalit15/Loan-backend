@@ -56,7 +56,6 @@ export const costomerearlypay = asyncHandler(async (req, res) => {
   });
 });
 
-
 export const createDiscount = asyncHandler(async (req, res) => {
     const { discountTen, startDateTen, endDateTen, discountFive, startDateFive, endDateFive, customerId } = req.body;
 

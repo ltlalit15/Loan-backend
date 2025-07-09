@@ -12,7 +12,10 @@ const DiscountSchema = new mongoose.Schema({
         type: String,
         default: "pending"
     },
-    customerId: { type: String }
+    customerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
+    },
 }, {
     timestamps: true
 });
