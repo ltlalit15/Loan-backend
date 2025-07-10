@@ -4,11 +4,12 @@ import { logins, CreateCustumer, getCustumers, UpdateCustumerStatus, deleteCusto
 
 import upload from "../Utils/multer.js";
 import { authMiddleware, isAdmin, isCustumer } from "../Middlewares/AuthMiddleware.js";
+
 const router = express.Router();
 
 router.post("/login", logins);
 router.get("/custumers", getCustumers);
-// createcustomer
+
 router.post(
   "/createcustumer",
   upload.fields([

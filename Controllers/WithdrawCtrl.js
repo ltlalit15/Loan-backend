@@ -97,9 +97,6 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
   });
 });
 
-
-
-
 export const getWithdrwByCustomerId = asyncHandler(async (req, res) => {
   const { customerId } = req.params;
 
