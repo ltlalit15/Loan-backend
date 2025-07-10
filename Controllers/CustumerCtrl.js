@@ -120,6 +120,26 @@ export const getCustumers = asyncHandler(async (req, res) => {
 
   if (customerId) {
     customers = await Customer.find({ _id: customerId }).select("-password");
+
+    const withdraws = await Withdraw.find({ customerId: customerId });
+    const approvedWithdraws = withdraws.filter(w => w.withdrawStatus === "Approved");
+
+    const totalWithdrawAmount = approvedWithdraws.reduce(
+      (acc, t) => acc + parseFloat(t.withdrawAmount || 0),
+      0
+    );
+
+    const approvedAmount = parseFloat(customers[0]?.approvedAmount || 0);
+    const factorRate = parseFloat(customers[0]?.factorRate || 1);
+
+    const newPaybackAmount = totalWithdrawAmount * factorRate;
+
+    // Push new fields into customer object
+    customers = customers.map((cust) => ({
+      ...cust.toObject(),
+      currentAmount: totalWithdrawAmount,
+      NewAmount: newPaybackAmount,
+    }));
   } else {
     customers = await Customer.find({ role: "customer" }).select("-password");
   }

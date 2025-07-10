@@ -14,27 +14,31 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
     filter.customerId = new mongoose.Types.ObjectId(customerId);
   }
 
-  // ✅ Include approvedAmount & totalRepayment in populate
   const data = await DiscountModel.find(filter).populate(
     "customerId",
-    "customerName email approvedAmount totalRepayment"
+    "customerName email approvedAmount totalRepayment factorRate"
   );
 
   const today = new Date();
 
   const result = await Promise.all(
     data.map(async (item) => {
-      const approvedAmount = parseFloat(item.customerId?.approvedAmount || 0);
-      const totalRepayment = parseFloat(item.customerId?.totalRepayment || 0);
-      const factorRateAmount = totalRepayment - approvedAmount;
+      const approvedAmount = parseFloat(item.customerId?.approvedAmount);
+      const factorRate = parseFloat(item.customerId?.factorRate);
 
-      const discountTen = parseFloat(item.discountTen || 0);
-      const discountFive = parseFloat(item.discountFive || 0);
+      const discountTen = parseFloat(item.discountTen); 
+      const discountFive = parseFloat(item.discountFive); 
 
-      const TenDicountAmount = (factorRateAmount * discountTen) / 100;
-      const FiveDicountAmount = (factorRateAmount * discountFive) / 100;
+      const discountTenPoint = (discountTen / 100);
+      const discountFivePoint = (discountFive / 100);
 
-      // Calculate Discount Ten Status
+      const newFactorRateTen = factorRate - discountTenPoint;
+      const newFactorRateFive = factorRate - discountFivePoint;
+
+      const TenDiscountAmount = approvedAmount * (factorRate - newFactorRateTen);
+      const FiveDiscountAmount = approvedAmount * (factorRate - newFactorRateFive);
+
+
       let discountTenStatus = "N/A";
       if (item.startDateTen && item.endDateTen) {
         if (today > item.endDateTen) {
@@ -44,7 +48,6 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         }
       }
 
-      // Calculate Discount Five Status
       let discountFiveStatus = "N/A";
       if (item.startDateFive && item.endDateFive) {
         if (today > item.endDateFive) {
@@ -54,7 +57,6 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         }
       }
 
-      // ✅ Update status in DB
       await DiscountModel.findByIdAndUpdate(
         item._id,
         {
@@ -64,8 +66,8 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         { new: true }
       );
 
-      let finalTenAmount = TenDicountAmount;
-      let finalFiveAmount = FiveDicountAmount;
+      let finalTenAmount = TenDiscountAmount;
+      let finalFiveAmount = FiveDiscountAmount;
 
       if (item.discountStatus === "Used") {
         finalTenAmount = 0;
@@ -86,10 +88,11 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         discountStatus: item.discountStatus,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
-        TenDicountAmount: finalTenAmount.toFixed(2),
-        FiveDicountAmount: finalFiveAmount.toFixed(2),
+        TenDiscountAmount: finalTenAmount.toFixed(2),
+        FiveDiscountAmount: finalFiveAmount.toFixed(2),
+        newFactorRateTen: newFactorRateTen.toFixed(2),
+        newFactorRateFive: newFactorRateFive.toFixed(2),
       };
-
     })
   );
 
