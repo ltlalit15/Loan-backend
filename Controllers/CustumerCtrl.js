@@ -291,6 +291,7 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
   await CreditUpgardeRequest.deleteMany({ customerId: id });
   await Discount.deleteMany({ customerId: id });
   await EarlyPayoff.deleteMany({ customerId: id });
+  await EarlyPayoff.deleteMany({ customerId: id });
 
   res.status(200).json({
     message: "Customer deleted successfully",

@@ -59,7 +59,7 @@ const customerSchema = new mongoose.Schema(
     },
     customerStatus: {
       type: String,
-      default: "inReview"
+      default: "in Review"
     },
     resetToken:
     {
