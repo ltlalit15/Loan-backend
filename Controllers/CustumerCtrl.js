@@ -60,7 +60,12 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
     panDoc: panDocUrl,
     password: hashedPassword,
   });
-  console.log("customer", customer);
+
+  const Notify = {
+    customerId: customer._id,
+    message: `New Customer ${customerName} added approve customer docs.`
+  }
+  await Notifiaction.create(Notify)
   res.status(201).json({
     message: "Customer created successfully ✅",
     customer: {
