@@ -58,13 +58,27 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
     throw new Error("Withdraw request not found");
   }
 
+  // 💥 Prevent duplicate approval
+  if (findWithdraw.withdrawStatus === "Approved") {
+    res.status(400);
+    throw new Error("Withdraw already approved");
+  }
+
   if (withdrawStatus === "Approved") {
-    const availableAmount = parseFloat(findWithdraw.availableAmount);
     const withdrawAmount = parseFloat(findWithdraw.withdrawAmount);
     const customerId = findWithdraw.customerId;
 
-    const updatedAvailableAmount = Number((availableAmount - withdrawAmount).toFixed(2));
+    // ✅ Get latest balance from customer
+    const customer = await Custumer.findById(customerId);
+    if (!customer) {
+      res.status(404);
+      throw new Error("Customer not found");
+    }
 
+    const currentBalance = parseFloat(customer.availBalance);
+    const updatedAvailableAmount = Number((currentBalance - withdrawAmount).toFixed(2));
+
+    // ✅ Update withdraw record
     withdrawStatusCustomer = await Withdraw.findByIdAndUpdate(
       id,
       {
@@ -74,14 +88,17 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    await Custumer.findByIdAndUpdate(customerId, {
-      availBalance: updatedAvailableAmount,
-    });
+    // ✅ Update customer balance
+    if (withdrawStatusCustomer) {
+      await Custumer.findByIdAndUpdate(customerId, {
+        availBalance: updatedAvailableAmount,
+      });
 
-    await Notifiaction.create({
-      message: `withdrawal of $${withdrawAmount} has been approved and processed.`,
-      customerId,
-    });
+      await Notifiaction.create({
+        message: `Withdrawal of $${withdrawAmount} has been approved and processed.`,
+        customerId,
+      });
+    }
   } else {
     withdrawStatusCustomer = await Withdraw.findByIdAndUpdate(
       id,
@@ -96,6 +113,7 @@ export const withdrawstatusupdate = asyncHandler(async (req, res) => {
     withdrawStatus: withdrawStatusCustomer.withdrawStatus,
   });
 });
+
 
 export const getWithdrwByCustomerId = asyncHandler(async (req, res) => {
   const { customerId } = req.params;
