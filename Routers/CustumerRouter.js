@@ -21,10 +21,6 @@ router.post(
 
 router.put(
   "/updateCustumer/:id",
-  upload.fields([
-    { name: "gstDoc", maxCount: 1 },
-    { name: "panDoc", maxCount: 1 },
-  ]),
   authMiddleware,
   // isCustumer,
   updateCustomer

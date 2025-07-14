@@ -191,7 +191,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
   customer.approvedAmount = approvedAmount || customer.approvedAmount;
   customer.totalRepayment = totalRepayment || customer.totalRepayment;
   customer.term_month = term_month || customer.term_month;
-  einNumber.term_month = term_month || einNumber.term_month;
+  customer.einNumber = einNumber || customer.einNumber;
   customer.availBalance = availBalance || customer.availBalance;
   customer.installment = installment || customer.installment;
 
