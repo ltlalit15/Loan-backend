@@ -14,19 +14,10 @@ const customerSchema = new mongoose.Schema(
     phoneNumber: {
       type: String
     },
-    address: {
-      type: String
-    },
-    creditLine: {
+    einNumber: {
       type: String
     },
     password: {
-      type: String
-    },
-    gstDoc: {
-      type: String
-    },
-    panDoc: {
       type: String
     },
     approvedAmount: {
@@ -59,7 +50,7 @@ const customerSchema = new mongoose.Schema(
     },
     customerStatus: {
       type: String,
-      default: "in Review"
+      default: "Active"
     },
     resetToken:
     {

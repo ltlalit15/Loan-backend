@@ -19,8 +19,7 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
     companyName,
     email,
     phoneNumber,
-    address,
-    creditLine,
+    einNumber,
     password
   } = req.body;
 
@@ -30,21 +29,6 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
     return res.status(409).json({ message: "Customer already exists" });
   }
 
-  let gstDocUrl = "";
-  let panDocUrl = "";
-
-  if (req.files?.gstDoc) {
-    const result = await cloudinary.uploader.upload(req.files.gstDoc[0].path);
-    gstDocUrl = result.secure_url;
-    fs.unlinkSync(req.files.gstDoc[0].path);
-  }
-
-  if (req.files?.panDoc) {
-    const result = await cloudinary.uploader.upload(req.files.panDoc[0].path);
-    panDocUrl = result.secure_url;
-    fs.unlinkSync(req.files.panDoc[0].path);
-  }
-
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -52,12 +36,9 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
   const customer = await Customer.create({
     customerName,
     companyName,
+    einNumber,
     email,
     phoneNumber,
-    address,
-    creditLine,
-    gstDoc: gstDocUrl,
-    panDoc: panDocUrl,
     password: hashedPassword,
   });
 
@@ -74,10 +55,7 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
       companyName: customer.companyName,
       email: customer.email,
       phoneNumber: customer.phoneNumber,
-      address: customer.address,
-      creditLine: customer.creditLine,
-      gstDoc: customer.gstDoc,
-      panDoc: customer.panDoc,
+      einNumber: customer.einNumber,
       factorRate: customer.factorRate,
       role: customer.role,
     },
@@ -106,12 +84,10 @@ export const logins = asyncHandler(async (req, res) => {
       customerName: customer.customerName,
       companyName: customer.companyName,
       email: customer.email,
+      einNumber: customer.einNumber,
       phoneNumber: customer.phoneNumber,
       address: customer.address,
-      creditLine: customer.creditLine,
       factorRate: customer.factorRate,
-      gstDoc: customer.gstDoc,
-      panDoc: customer.panDoc,
       role: customer.role,
       token,
     },
@@ -187,9 +163,8 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     customerName,
     companyName,
     email,
+    einNumber,
     phoneNumber,
-    address,
-    creditLine,
     approvedAmount,
     totalRepayment,
     term_month,
@@ -205,42 +180,18 @@ export const updateCustomer = asyncHandler(async (req, res) => {
     throw new Error("Customer not found ❌");
   }
 
-  // ✅ GST Doc Upload (No folder)
-  if (req.files?.gstDoc) {
-    if (customer.gstDocPublicId) {
-      await cloudinary.uploader.destroy(customer.gstDocPublicId);
-    }
-
-    const result = await cloudinary.uploader.upload(req.files.gstDoc[0].path);
-    customer.gstDoc = result.secure_url;
-    customer.gstDocPublicId = result.public_id;
-    fs.unlinkSync(req.files.gstDoc[0].path);
-  }
-
-  // ✅ PAN Doc Upload (No folder)
-  if (req.files?.panDoc) {
-    if (customer.panDocPublicId) {
-      await cloudinary.uploader.destroy(customer.panDocPublicId);
-    }
-
-    const result = await cloudinary.uploader.upload(req.files.panDoc[0].path);
-    customer.panDoc = result.secure_url;
-    customer.panDocPublicId = result.public_id;
-    fs.unlinkSync(req.files.panDoc[0].path);
-  }
 
   // ✅ Update basic fields
   customer.customerName = customerName || customer.customerName;
   customer.companyName = companyName || customer.companyName;
   customer.email = email || customer.email;
   customer.phoneNumber = phoneNumber || customer.phoneNumber;
-  customer.address = address || customer.address;
-  customer.creditLine = creditLine || customer.creditLine;
   customer.factorRate = factorRate || customer.factorRate;
   customer.term_type = term_type || customer.term_type;
   customer.approvedAmount = approvedAmount || customer.approvedAmount;
   customer.totalRepayment = totalRepayment || customer.totalRepayment;
   customer.term_month = term_month || customer.term_month;
+  einNumber.term_month = term_month || einNumber.term_month;
   customer.availBalance = availBalance || customer.availBalance;
   customer.installment = installment || customer.installment;
 
@@ -258,15 +209,12 @@ export const updateCustomer = asyncHandler(async (req, res) => {
       companyName: updatedCustomer.companyName,
       email: updatedCustomer.email,
       phoneNumber: updatedCustomer.phoneNumber,
-      address: updatedCustomer.address,
-      creditLine: updatedCustomer.creditLine,
       factorRate: updatedCustomer.factorRate,
-      gstDoc: updatedCustomer.gstDoc,
-      panDoc: updatedCustomer.panDoc,
       approvedAmount: updatedCustomer.approvedAmount,
       totalRepayment: updatedCustomer.totalRepayment,
       term_month: updatedCustomer.term_month,
       installment: updatedCustomer.installment,
+      einNumber: updatedCustomer.einNumber,
       availBalance: updatedCustomer.availBalance,
       remainingRepayment: updatedCustomer.remainingRepayment,
       term_type: updatedCustomer.term_type,
