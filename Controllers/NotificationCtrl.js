@@ -2,10 +2,26 @@ import Notifiaction from "../Models/NotifiactionModel.js";
 import asyncHandler from "express-async-handler";
 
 export const getNotification = asyncHandler(async (req, res) => {
-    const { customerId } = req.params;
-    const getNotificationData = await Notifiaction.find({ customerId });
-    return res.status(200).json({ data: getNotificationData })
+  const { customerId } = req.params;
+
+  const getNotificationData = await Notifiaction.find({ customerId }).populate({
+    path: 'customerId',
+    select: 'einNumber'
+  });
+
+  const result = getNotificationData.map((item) => ({
+    _id: item._id,
+    customerId:item.customerId._id,
+    einNumber:item.customerId.einNumber,
+    message: item.message,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    __v: item.__v,
+  }));
+
+  return res.status(200).json({ data: result });
 });
+
 
 export const getAdminNotification = asyncHandler(async (req, res) => {
     const notifications = await Notifiaction.find()
