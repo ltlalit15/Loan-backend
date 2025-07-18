@@ -11,11 +11,11 @@ export const getNotification = asyncHandler(async (req, res) => {
 
   const result = getNotificationData.map((item) => ({
     _id: item._id,
-    customerId:item.customerId._id,
-    einNumber:item.customerId.einNumber,
-    message: item.message,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
+    customerId:item?.customerId?._id,
+    einNumber:item?.customerId?.einNumber,
+    message: item?.message,
+    createdAt: item?.createdAt,
+    updatedAt: item?.updatedAt,
     __v: item.__v,
   }));
 
