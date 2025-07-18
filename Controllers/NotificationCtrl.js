@@ -2,42 +2,46 @@ import Notifiaction from "../Models/NotifiactionModel.js";
 import asyncHandler from "express-async-handler";
 
 export const getNotification = asyncHandler(async (req, res) => {
-  const { customerId } = req.params;
+    const { customerId } = req.params;
 
-  const getNotificationData = await Notifiaction.find({ customerId }).populate({
-    path: 'customerId',
-    select: 'einNumber'
-  });
+    const getNotificationData = await Notifiaction.find({ customerId }).populate({
+        path: 'customerId',
+        select: 'einNumber'
+    });
 
-  const result = getNotificationData.map((item) => ({
-    _id: item._id,
-    customerId:item?.customerId?._id,
-    einNumber:item?.customerId?.einNumber,
-    message: item?.message,
-    createdAt: item?.createdAt,
-    updatedAt: item?.updatedAt,
-    __v: item.__v,
-  }));
+    const result = getNotificationData.map((item) => ({
+        _id: item._id,
+        customerId: item?.customerId?._id,
+        einNumber: item?.customerId?.einNumber,
+        message: item?.message,
+        createdAt: item?.createdAt,
+        updatedAt: item?.updatedAt,
+        __v: item.__v,
+    }));
 
-  return res.status(200).json({ data: result });
+    return res.status(200).json({ data: result });
 });
 
 
 export const getAdminNotification = asyncHandler(async (req, res) => {
-    const notifications = await Notifiaction.find()
-        .populate({ path: 'customerId', select: 'customerName' });
+  const notifications = await Notifiaction.find().populate({
+    path: 'customerId',
+    select: 'customerName einNumber',
+  });
 
-    const formattedData = notifications.map((notif) => ({
-        id: notif._id,
-        customerName: notif.customerId?.customerName || "N/A",
-        customerId: notif.customerId?._id || "N/A",
-        message: notif.message,
-        createdAt: notif.createdAt,
-        updatedAt: notif.updatedAt
-    }));
+  const formattedData = notifications.map((notif) => ({
+    id: notif._id,
+    customerName: notif.customerId?.customerName || "N/A",
+    customerId: notif.customerId?._id || "N/A",
+    einNumber: notif.customerId?.einNumber || "N/A", // ✅ fix here
+    message: notif.message,
+    createdAt: notif.createdAt,
+    updatedAt: notif.updatedAt,
+  }));
 
-    return res.status(200).json({ data: formattedData });
+  return res.status(200).json({ data: formattedData });
 });
+
 
 
 import mongoose from "mongoose";
