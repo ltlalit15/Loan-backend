@@ -124,7 +124,7 @@ export const getAllEarlyPayoffs = asyncHandler(async (req, res) => {
 
   const allRequests = await EarlyPayoff.find(filter).populate(
     "customerId",
-    "customerName email phoneNumber"
+    "customerName email phoneNumber einNumber"
   );
 
   res.status(200).json({

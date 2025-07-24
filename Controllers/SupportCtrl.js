@@ -15,6 +15,7 @@ export const getAllContacts = asyncHandler(async (req, res) => {
     customerId: item.customerId?._id,
     _id: item?._id,
     customerName: item.customerId?.customerName,
+    einNumber: item.customerId?.einNumber,
     companyName: item.customerId?.companyName,
     email: item.customerId?.email,
     phoneNumber: item.customerId?.phoneNumber,

@@ -5,10 +5,10 @@ import Customer from "../Models/CustumerModel.js";
 
 export const FundingBalance = asyncHandler(async (req, res) => {
   const withdrawals = await Withdraw.find({ withdrawStatus: "Approved" })
-    .populate("customerId", "customerName");
+    .populate("customerId", "customerName einNumber");
 
   const repayments = await Repayment.find()
-    .populate("customerId", "customerName");
+    .populate("customerId", "customerName einNumber");
 
   const findCustomer = await Customer.find();
 
@@ -26,6 +26,7 @@ export const FundingBalance = asyncHandler(async (req, res) => {
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
     customerName: item.customerId?.customerName || "Unknown",
+    einNumber: item.customerId?.einNumber || "Unknown",
     customerId: item.customerId?._id || "Unknown"
 
   }));
@@ -38,6 +39,7 @@ export const FundingBalance = asyncHandler(async (req, res) => {
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
     customerName: item.customerId?.customerName || "Unknown",
+    einNumber: item.customerId?.einNumber || "Unknown",
     customerId: item.customerId?._id || "Unknown"
   }));
 

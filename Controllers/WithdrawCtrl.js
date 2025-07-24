@@ -32,11 +32,12 @@ export const getAllWithdrawals = asyncHandler(async (req, res) => {
 
   const withdrawals = await Withdraw.find().populate({
     path: 'customerId',
-    select: 'customerName'
+    select: 'customerName einNumber'
   });
     const result = withdrawals.map((withdraw) => ({
     ...withdraw._doc,
     customerId: withdraw.customerId?._id,
+    einNumber: withdraw.customerId?.einNumber,
     customerName: withdraw.customerId?.customerName
   }));
   res.status(200).json({
