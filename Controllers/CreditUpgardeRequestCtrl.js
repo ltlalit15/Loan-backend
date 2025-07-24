@@ -41,7 +41,7 @@ export const getAllCreditUpgrades = asyncHandler(async (req, res) => {
 
   const data = await CreditUpgrade.find(filter).populate(
     "customerId",
-    "customerName email totalRepayment remainingRepayment"
+    "customerName email totalRepayment remainingRepayment einNumber"
   );
 
   const modifiedData = data.map((item) => {
@@ -61,6 +61,7 @@ export const getAllCreditUpgrades = asyncHandler(async (req, res) => {
     return {
       _id: item._id,
       customerId: customer._id,
+      einNumber: customer.einNumber,
       customerName: customer.customerName,
       requestedAmount: item.requestedAmount,
       creditUpgradeStatus: item.creditUpgradeStatus,
