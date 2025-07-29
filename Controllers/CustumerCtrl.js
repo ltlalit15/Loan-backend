@@ -13,6 +13,36 @@ import cloudinary from "../Config/cloudinary.js";
 import fs from "fs";
 import dayjs from "dayjs";
 
+import moment  from "moment";
+
+function calculateLoanEndDate(createdAt, termMonth, termType) {
+  let endDate = moment(createdAt);
+
+  switch (termType.toLowerCase()) {
+    case "monthly":
+      endDate = endDate.add(termMonth, "months");
+      break;
+    case "weekly":
+      endDate = endDate.add(termMonth * 4, "weeks"); // approx 4 weeks per month
+      break;
+    case "bi-weekly":
+      endDate = endDate.add(termMonth * 2, "weeks"); // 2 bi-weekly periods per month
+      break;
+    default:
+      throw new Error("Invalid term type");
+  }
+
+  return endDate.format("YYYY-MM-DD");
+}
+
+// Example usage:
+const createdAt = "2025-07-29T12:40:43.769Z";
+const termMonth = 5;
+const termType = "monthly";
+
+const loanEndDate = calculateLoanEndDate(createdAt, termMonth, termType);
+console.log("Loan End Date:", loanEndDate); // 👉 2025-12-29
+
 export const CreateCustumer = asyncHandler(async (req, res) => {
   const {
     customerName,
@@ -116,11 +146,16 @@ export const getCustumers = asyncHandler(async (req, res) => {
     const newPaybackAmount = totalWithdrawAmount * factorRate;
 
     // Push new fields into customer object
-    customers = customers.map((cust) => ({
-      ...cust.toObject(),
-      currentAmount: totalWithdrawAmount,
-      NewAmount: newPaybackAmount,
-    }));
+customers = customers.map((cust) => {
+  const endDate = calculateLoanEndDate(cust.createdAt, parseInt(cust.term_month), cust.term_type);
+  return {
+    ...cust.toObject(),
+    currentAmount: totalWithdrawAmount,
+    NewAmount: newPaybackAmount,
+    loanEndDate: endDate,
+  };
+});
+
   } else {
     customers = await Customer.find({ role: "customer" }).select("-password");
   }
