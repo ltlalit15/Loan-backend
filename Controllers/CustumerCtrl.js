@@ -16,6 +16,7 @@ import moment from "moment";
 
 function calculateLoanEndDate(createdAt, termMonth, termType) {
   let endDate = moment(createdAt);
+  console.log("termType", termType);
   switch (termType.toLowerCase()) {
     case "monthly":
       endDate = endDate.add(termMonth, "months");
@@ -110,39 +111,114 @@ export const logins = asyncHandler(async (req, res) => {
   });
 });
 
+// export const getCustumers = asyncHandler(async (req, res) => {
+//   const { customerId } = req.query;
+//   let customers;
+//   if (customerId === "6863b2418b8a54cfd7c8e51a") {
+//     const allCustomers = await Customer.find({ role: "admin" });
+//   } else
+//     if (customerId) {
+//       customers = await Customer.find({ _id: customerId }).select("-password");
+//       const withdraws = await Withdraw.find({ customerId });
+//       const approvedWithdraws = withdraws.filter(w => w.withdrawStatus === "Approved");
+//       const totalWithdrawAmount = approvedWithdraws.reduce(
+//         (acc, t) => acc + parseFloat(t.withdrawAmount || 0),
+//         0
+//       );
+//       const approvedAmount = parseFloat(customers[0]?.approvedAmount || 0);
+//       const factorRate = parseFloat(customers[0]?.factorRate || 1);
+//       const newPaybackAmount = totalWithdrawAmount * factorRate;
+//       customers = customers.map((cust) => {
+//         console.log("cust.term_month", cust);
+//         const endDate = calculateLoanEndDate(cust.createdAt, parseInt(cust.term_month), cust.term_type);
+//         return {
+//           ...cust.toObject(),
+//           currentAmount: totalWithdrawAmount,
+//           NewAmount: newPaybackAmount,
+//           loanEndDate: endDate,
+//         };
+//       });
+//     } else {
+//       customers = await Customer.find({ role: "customer" }).select("-password");
+//     }
+
+//   res.status(200).json({
+//     message: "Customers fetched successfully",
+//     total: customers.length,
+//     customers,
+//   });
+// });
 export const getCustumers = asyncHandler(async (req, res) => {
   const { customerId } = req.query;
-  let customers;
 
-  if (customerId) {
-    customers = await Customer.find({ _id: customerId }).select("-password");
-    const withdraws = await Withdraw.find({ customerId });
-    const approvedWithdraws = withdraws.filter(w => w.withdrawStatus === "Approved");
-    const totalWithdrawAmount = approvedWithdraws.reduce(
-      (acc, t) => acc + parseFloat(t.withdrawAmount || 0),
-      0
-    );
-    const approvedAmount = parseFloat(customers[0]?.approvedAmount || 0);
-    const factorRate = parseFloat(customers[0]?.factorRate || 1);
-    const newPaybackAmount = totalWithdrawAmount * factorRate;
-    customers = customers.map((cust) => {
-      const endDate = calculateLoanEndDate(cust.createdAt, parseInt(cust.term_month), cust.term_type);
-      return {
-        ...cust.toObject(),
-        currentAmount: totalWithdrawAmount,
-        NewAmount: newPaybackAmount,
-        loanEndDate: endDate,
-      };
-    });
-  } else {
+  try {
+    let customers = [];
+
+    // 👉 Case 1: Admin fetch
+    if (customerId === "6863b2418b8a54cfd7c8e51a") {
+      const allCustomers = await Customer.find({ role: "admin" }).select("-password");
+
+      return res.status(200).json({
+        message: "Admin customers fetched successfully",
+        total: allCustomers.length,
+        customers: allCustomers,
+      });
+    }
+
+    // 👉 Case 2: Specific customer with ID
+    if (customerId) {
+      customers = await Customer.find({ _id: customerId }).select("-password");
+
+      if (!customers.length) {
+        return res.status(404).json({ message: "Customer not found", success: false });
+      }
+
+      const withdraws = await Withdraw.find({ customerId });
+      const approvedWithdraws = withdraws.filter(w => w.withdrawStatus === "Approved");
+
+      const totalWithdrawAmount = approvedWithdraws.reduce(
+        (acc, t) => acc + parseFloat(t.withdrawAmount || 0),
+        0
+      );
+
+      const approvedAmount = parseFloat(customers[0]?.approvedAmount || 0);
+      const factorRate = parseFloat(customers[0]?.factorRate || 1);
+      const newPaybackAmount = totalWithdrawAmount * factorRate;
+
+      customers = customers.map((cust) => {
+        const endDate = calculateLoanEndDate(
+          cust.createdAt,
+          parseInt(cust.term_month),
+          cust.term_type
+        );
+
+        return {
+          ...cust.toObject(),
+          currentAmount: totalWithdrawAmount,
+          NewAmount: newPaybackAmount,
+          loanEndDate: endDate,
+        };
+      });
+
+      return res.status(200).json({
+        message: "Customer fetched successfully",
+        total: customers.length,
+        customers,
+      });
+    }
+
+    // 👉 Case 3: Get all customers with role "customer"
     customers = await Customer.find({ role: "customer" }).select("-password");
-  }
 
-  res.status(200).json({
-    message: "Customers fetched successfully",
-    total: customers.length,
-    customers,
-  });
+    res.status(200).json({
+      message: "Customers fetched successfully",
+      total: customers.length,
+      customers,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message, success: false });
+  }
 });
 
 export const UpdateCustumerStatus = asyncHandler(async (req, res) => {
@@ -169,7 +245,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
   const {
     customerName, companyName, email, einNumber, phoneNumber,
     approvedAmount, totalRepayment, term_month, installment,
-    factorRate, availBalance, term_type , originalFee
+    factorRate, availBalance, term_type, originalFee
   } = req.body;
   const customer = await Customer.findById(id);
   if (!customer) {
