@@ -23,14 +23,14 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
 
   const result = await Promise.all(
     data.map(async (item) => {
-      const approvedAmount = parseFloat(item.customerId?.approvedAmount);
-      const factorRate = parseFloat(item.customerId?.factorRate);
+      const approvedAmount = parseFloat(item.customerId?.approvedAmount || 0);
+      const factorRate = parseFloat(item.customerId?.factorRate || 0);
 
-      const discountTen = parseFloat(item.discountTen); 
-      const discountFive = parseFloat(item.discountFive); 
+      const discountTen = parseFloat(item.discountTen || 0);
+      const discountFive = parseFloat(item.discountFive || 0);
 
-      const discountTenPoint = (discountTen / 100);
-      const discountFivePoint = (discountFive / 100);
+      const discountTenPoint = discountTen / 100;
+      const discountFivePoint = discountFive / 100;
 
       const newFactorRateTen = factorRate - discountTenPoint;
       const newFactorRateFive = factorRate - discountFivePoint;
@@ -38,32 +38,44 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
       const TenDiscountAmount = approvedAmount * (factorRate - newFactorRateTen);
       const FiveDiscountAmount = approvedAmount * (factorRate - newFactorRateFive);
 
+      const startDateTen = new Date(item.startDateTen);
+      const endDateTen = new Date(item.endDateTen);
+      const startDateFive = new Date(item.startDateFive);
+      const endDateFive = new Date(item.endDateFive);
 
       let discountTenStatus = "N/A";
       if (item.startDateTen && item.endDateTen) {
-        if (today > item.endDateTen) {
+        if (today > endDateTen) {
           discountTenStatus = "Expired";
-        } else if (today >= item.startDateTen && today <= item.endDateTen) {
+        } else if (today >= startDateTen && today <= endDateTen) {
           discountTenStatus = "Active";
         }
       }
 
       let discountFiveStatus = "N/A";
       if (item.startDateFive && item.endDateFive) {
-        if (today > item.endDateFive) {
+        if (today > endDateFive) {
           discountFiveStatus = "Expired";
-        } else if (today >= item.startDateFive && today <= item.endDateFive) {
+        } else if (today >= startDateFive && today <= endDateFive) {
           discountFiveStatus = "Active";
         }
       }
 
+      // Optional combined discountStatus logic
+      let discountStatus = "N/A";
+      if (discountTenStatus === "Active" || discountFiveStatus === "Active") {
+        discountStatus = "Active";
+      } else if (discountTenStatus === "Expired" && discountFiveStatus === "Expired") {
+        discountStatus = "Expired";
+      }
+
+      // Update in DB
       await DiscountModel.findByIdAndUpdate(
         item._id,
         {
           discountTenStatus,
-          discountFiveStatus,
-        },
-        { new: true }
+          discountFiveStatus
+        }
       );
 
       let finalTenAmount = TenDiscountAmount;
@@ -85,19 +97,23 @@ export const getAllDiscounts = asyncHandler(async (req, res) => {
         discountFive: item.discountFive,
         startDateFive: item.startDateFive,
         endDateFive: item.endDateFive,
-        discountStatus: item.discountStatus,
+        discountTenStatus,
+        discountFiveStatus,
+        discountStatus,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
         TenDiscountAmount: finalTenAmount.toFixed(2),
         FiveDiscountAmount: finalFiveAmount.toFixed(2),
         newFactorRateTen: newFactorRateTen.toFixed(2),
-        newFactorRateFive: newFactorRateFive.toFixed(2),
+        newFactorRateFive: newFactorRateFive.toFixed(2)
       };
     })
   );
 
   res.status(200).json({ success: true, data: result });
 });
+
+
 
 export const costomerearlypay = asyncHandler(async (req, res) => {
   const { customerId } = req.query;

@@ -8,6 +8,9 @@ const customerSchema = new mongoose.Schema(
     companyName: {
       type: String
     },
+    originalFee: {
+      type: String
+    },
     email: {
       type: String
     },

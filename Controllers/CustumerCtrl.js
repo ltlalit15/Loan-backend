@@ -5,43 +5,32 @@ import Withdraw from "../Models/WithdrawModel.js";
 import EarlyPayoff from "../Models/EarlyPayoffManagmentModel.js";
 import CreditUpgardeRequest from "../Models/CreditUpgardeRequestModel.js";
 import Support from "../Models/SupportModel.js";
-import Notifiaction from "../Models/NotifiactionModel.js";
+import Notification from "../Models/NotifiactionModel.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../Config/jwtToken.js";
 import cloudinary from "../Config/cloudinary.js";
 import fs from "fs";
 import dayjs from "dayjs";
-
-import moment  from "moment";
+import moment from "moment";
 
 function calculateLoanEndDate(createdAt, termMonth, termType) {
   let endDate = moment(createdAt);
-
   switch (termType.toLowerCase()) {
     case "monthly":
       endDate = endDate.add(termMonth, "months");
       break;
     case "weekly":
-      endDate = endDate.add(termMonth * 4, "weeks"); // approx 4 weeks per month
+      endDate = endDate.add(termMonth, "weeks");
       break;
     case "bi-weekly":
-      endDate = endDate.add(termMonth * 2, "weeks"); // 2 bi-weekly periods per month
+      endDate = endDate.add(termMonth * 2, "weeks");
       break;
     default:
       throw new Error("Invalid term type");
   }
-
   return endDate.format("YYYY-MM-DD");
 }
-
-// Example usage:
-const createdAt = "2025-07-29T12:40:43.769Z";
-const termMonth = 5;
-const termType = "monthly";
-
-const loanEndDate = calculateLoanEndDate(createdAt, termMonth, termType);
-console.log("Loan End Date:", loanEndDate); // 👉 2025-12-29
 
 export const CreateCustumer = asyncHandler(async (req, res) => {
   const {
@@ -55,10 +44,8 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
 
   const existingCustomer = await Customer.findOne({ email });
   if (existingCustomer) {
-    res.status(400);
     return res.status(409).json({ message: "Customer already exists" });
   }
-
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -75,8 +62,9 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
   const Notify = {
     customerId: customer._id,
     message: `New Customer ${customerName} added approve customer docs.`
-  }
-  await Notifiaction.create(Notify)
+  };
+  await Notification.create(Notify);
+
   res.status(201).json({
     message: "Customer created successfully ✅",
     customer: {
@@ -94,13 +82,11 @@ export const CreateCustumer = asyncHandler(async (req, res) => {
 
 export const logins = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
   const customer = await Customer.findOne({ email });
   if (!customer) {
     res.status(401);
     throw new Error("Invalid email or password");
   }
-
   const isMatch = await bcrypt.compare(password, customer.password);
   if (!isMatch) {
     res.status(401);
@@ -126,36 +112,28 @@ export const logins = asyncHandler(async (req, res) => {
 
 export const getCustumers = asyncHandler(async (req, res) => {
   const { customerId } = req.query;
-
   let customers;
 
   if (customerId) {
     customers = await Customer.find({ _id: customerId }).select("-password");
-
-    const withdraws = await Withdraw.find({ customerId: customerId });
+    const withdraws = await Withdraw.find({ customerId });
     const approvedWithdraws = withdraws.filter(w => w.withdrawStatus === "Approved");
-
     const totalWithdrawAmount = approvedWithdraws.reduce(
       (acc, t) => acc + parseFloat(t.withdrawAmount || 0),
       0
     );
-
     const approvedAmount = parseFloat(customers[0]?.approvedAmount || 0);
     const factorRate = parseFloat(customers[0]?.factorRate || 1);
-
     const newPaybackAmount = totalWithdrawAmount * factorRate;
-
-    // Push new fields into customer object
-customers = customers.map((cust) => {
-  const endDate = calculateLoanEndDate(cust.createdAt, parseInt(cust.term_month), cust.term_type);
-  return {
-    ...cust.toObject(),
-    currentAmount: totalWithdrawAmount,
-    NewAmount: newPaybackAmount,
-    loanEndDate: endDate,
-  };
-});
-
+    customers = customers.map((cust) => {
+      const endDate = calculateLoanEndDate(cust.createdAt, parseInt(cust.term_month), cust.term_type);
+      return {
+        ...cust.toObject(),
+        currentAmount: totalWithdrawAmount,
+        NewAmount: newPaybackAmount,
+        loanEndDate: endDate,
+      };
+    });
   } else {
     customers = await Customer.find({ role: "customer" }).select("-password");
   }
@@ -170,21 +148,15 @@ customers = customers.map((cust) => {
 export const UpdateCustumerStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { customerStatus } = req.body;
-
   const updatedCustomer = await Customer.findByIdAndUpdate(
     id,
     { customerStatus },
-    {
-      new: true,
-      runValidators: true,
-    }
+    { new: true, runValidators: true }
   ).select("-password");
-
   if (!updatedCustomer) {
     res.status(404);
     throw new Error("Customer not found");
   }
-
   res.status(200).json({
     message: "Customer status updated successfully ✅",
     customerId: updatedCustomer._id,
@@ -195,28 +167,15 @@ export const UpdateCustumerStatus = asyncHandler(async (req, res) => {
 export const updateCustomer = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const {
-    customerName,
-    companyName,
-    email,
-    einNumber,
-    phoneNumber,
-    approvedAmount,
-    totalRepayment,
-    term_month,
-    installment,
-    factorRate,
-    availBalance,
-    term_type
+    customerName, companyName, email, einNumber, phoneNumber,
+    approvedAmount, totalRepayment, term_month, installment,
+    factorRate, availBalance, term_type , originalFee
   } = req.body;
-
   const customer = await Customer.findById(id);
   if (!customer) {
     res.status(404);
     throw new Error("Customer not found ❌");
   }
-
-
-  // ✅ Update basic fields
   customer.customerName = customerName || customer.customerName;
   customer.companyName = companyName || customer.companyName;
   customer.email = email || customer.email;
@@ -227,15 +186,13 @@ export const updateCustomer = asyncHandler(async (req, res) => {
   customer.totalRepayment = totalRepayment || customer.totalRepayment;
   customer.term_month = term_month || customer.term_month;
   customer.einNumber = einNumber || customer.einNumber;
+  customer.originalFee = originalFee || customer.originalFee;
   customer.availBalance = availBalance || customer.availBalance;
   customer.installment = installment || customer.installment;
-
   if (totalRepayment !== undefined) {
     customer.remainingRepayment = totalRepayment;
   }
-
   const updatedCustomer = await customer.save();
-
   res.status(200).json({
     message: "Customer updated successfully ✅",
     customer: {
@@ -250,6 +207,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
       term_month: updatedCustomer.term_month,
       installment: updatedCustomer.installment,
       einNumber: updatedCustomer.einNumber,
+      originalFee: updatedCustomer.originalFee,
       availBalance: updatedCustomer.availBalance,
       remainingRepayment: updatedCustomer.remainingRepayment,
       term_type: updatedCustomer.term_type,
@@ -259,23 +217,18 @@ export const updateCustomer = asyncHandler(async (req, res) => {
 
 export const deleteCustomer = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
   const deletedCustomer = await Customer.findByIdAndDelete(id);
-
   if (!deletedCustomer) {
     res.status(404);
     throw new Error("Customer not found");
   }
-
   await Repayment.deleteMany({ customerId: id });
   await Withdraw.deleteMany({ customerId: id });
-  await Notifiaction.deleteMany({ customerId: id });
+  await Notification.deleteMany({ customerId: id });
   await Support.deleteMany({ customerId: id });
   await CreditUpgardeRequest.deleteMany({ customerId: id });
   await Discount.deleteMany({ customerId: id });
   await EarlyPayoff.deleteMany({ customerId: id });
-  await EarlyPayoff.deleteMany({ customerId: id });
-
   res.status(200).json({
     message: "Customer deleted successfully",
     customerId: deletedCustomer._id,
@@ -284,7 +237,6 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
 
 export const getCustomerNames = asyncHandler(async (req, res) => {
   const customers = await Customer.find({ role: "customer" }, { customerName: 1 });
-
   const customerList = customers.map(customer => ({
     id: customer._id,
     name: customer.customerName
@@ -293,35 +245,31 @@ export const getCustomerNames = asyncHandler(async (req, res) => {
     msg: "Successfully fetched All Customer",
     total: customerList.length,
     customers: customerList
-  })
+  });
 });
 
 export const autoDeductInstallments = asyncHandler(async (req, res) => {
   try {
     const customers = await Customer.find({ role: "customer" });
-
     const now = dayjs();
     let updatedCount = 0;
     let logs = [];
 
     for (const customer of customers) {
       const {
-        _id,
-        customerName,
-        totalRepayment,
-        installment,
-        term_type,
-        updatedAt
+        _id, customerName, remainingRepayment,
+        installment, term_type, updatedAt
       } = customer;
 
       const lastUpdated = dayjs(updatedAt);
       let nextDueDate;
 
-      if (term_type === "monthly") {
+      const type = term_type?.toLowerCase().replace(/-/g, "");
+      if (type === "monthly") {
         nextDueDate = lastUpdated.add(1, 'month');
-      } else if (term_type === "weekly") {
+      } else if (type === "weekly") {
         nextDueDate = lastUpdated.add(1, 'week');
-      } else if (term_type === "biweekly") {
+      } else if (type === "biweekly") {
         nextDueDate = lastUpdated.add(2, 'week');
       } else {
         logs.push({ customerId: _id, customerName, message: "Invalid term_type" });
@@ -329,24 +277,15 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
       }
 
       if (now.isSame(nextDueDate, 'day')) {
+        const newRemaining = parseFloat(remainingRepayment) - parseFloat(installment);
+        await Customer.findByIdAndUpdate(_id, {
+          remainingRepayment: newRemaining > 0 ? newRemaining : 0,
+          lastInstallmentDate: now.toDate(),
+        });
 
-        const remainingRepayment = parseFloat(customer.remainingRepayment);
-        const installmentAmount = parseFloat(customer.installment);
-
-        const newRemaining = remainingRepayment - installmentAmount;
-
-        await Customer.findByIdAndUpdate(
-          _id,
-          {
-            remainingRepayment: newRemaining > 0 ? newRemaining : 0,
-            lastInstallmentDate: now.toDate(),
-          }
-        );
-
-
-        await Notifiaction.create({
+        await Notification.create({
           message: `Installment of $${installment} deducted.`,
-          custumerId: _id
+          customerId: _id
         });
 
         updatedCount++;
@@ -374,9 +313,3 @@ export const autoDeductInstallments = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error while processing auto deduction" });
   }
 });
-
-
-
-
-
-
