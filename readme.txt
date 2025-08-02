@@ -1,96 +1,176 @@
-1. Request Real time calculation 
-2. Discount at factor rate
-3. in Discount section show the Discount amount with percentage 
-4. DiscountStatus Completed / disable  
-5. Popup close any postions and text replace and Repayments replace Payments
-6. Admin custommer support show with all details 
+import Customer from "../Models/CustumerModel.js";
+import asyncHandler from "express-async-handler";
+import bcrypt from "bcryptjs";
+import { generateToken } from "../Config/jwtToken.js";
+import crypto from "crypto";
+import Withdraw from "../Models/WithdrawModel.js"
 
-Funding & Balance Tracker
+export const logins = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-export const getAllDiscounts = asyncHandler(async (req, res) => {
-  const { customerId } = req.query;
-
-  let filter = {};
-  if (customerId) {
-    if (!mongoose.Types.ObjectId.isValid(customerId)) {
-      return res.status(400).json({ success: false, message: "Invalid customerId format" });
-    }
-    filter.customerId = new mongoose.Types.ObjectId(customerId);
+  const customer = await Customer.findOne({ email });
+  if (!customer) {
+    res.status(401);
+    throw new Error("Invalid email or password");
   }
 
-  const data = await DiscountModel.find(filter).populate(
-    "customerId",
-    "customerName email approvedAmount totalRepayment"
-  );
+  const isMatch = await bcrypt.compare(password, customer.password);
+  if (!isMatch) {
+    res.status(401);
+    throw new Error("Invalid email or password");
+  }
 
-  const today = new Date();
+  // ✅ Suspended customer check
+  if (customer.customerStatus === "Suspended") {
+    return res.status(403).json({
+      message: "Your account is suspended. Please contact admin.",
+    });
+  }
 
-  const result = await Promise.all(
-    data.map(async (item) => {
-      const approvedAmount = parseFloat(item.customerId?.approvedAmount || 0);
-      const totalRepayment = parseFloat(item.customerId?.totalRepayment || 0);
-      const factorRateAmount = totalRepayment - approvedAmount;
+  const token = generateToken(customer._id);
 
-      const discountTen = parseFloat(item.discountTen || 0);
-      const discountFive = parseFloat(item.discountFive || 0);
+  const withdrawals = await Withdraw.find({ customerId: customer._id, withdrawStatus: "Approved" });
 
-      const TenDicountAmount = (factorRateAmount * discountTen) / 100;
-      const FiveDicountAmount = (factorRateAmount * discountFive) / 100;
+  let totalWithdrawAmount = 0;
+  let approvedCreditLine = 0;
+  let minimumWithdrawl = false;
 
-      let discountTenStatus = "N/A";
-      if (item.startDateTen && item.endDateTen) {
-        if (today > item.endDateTen) {
-          discountTenStatus = "Expired";
-        } else if (today >= item.startDateTen && today <= item.endDateTen) {
-          discountTenStatus = "Active";
-        }
+  if (withdrawals.length > 0) {
+    withdrawals.forEach((withdraw) => {
+      totalWithdrawAmount += Number(withdraw.withdrawAmount || 0);
+      if (!approvedCreditLine && withdraw.approvedCreditLine) {
+        approvedCreditLine = Number(withdraw.approvedCreditLine);
       }
+    });
 
-      let discountFiveStatus = "N/A";
-      if (item.startDateFive && item.endDateFive) {
-        if (today > item.endDateFive) {
-          discountFiveStatus = "Expired";
-        } else if (today >= item.startDateFive && today <= item.endDateFive) {
-          discountFiveStatus = "Active";
-        }
-      }
+    const tenPercent = approvedCreditLine * 0.10;
+    minimumWithdrawl = totalWithdrawAmount >= tenPercent;
+  }
 
-      await DiscountModel.findByIdAndUpdate(
-        item._id,
-        {
-          discountTenStatus,
-          discountFiveStatus,
-        },
-        { new: true }
-      );
+  // ✅ Credit Increase Eligibility Logic
+  let creditIncrease = false;
 
-      return {
-        customerId: item.customerId?._id,
-        _id: item?._id,
-        customerName: item.customerId?.customerName,
-        email: item.customerId?.email,
-        discountTen: item.discountTen,
-        startDateTen: item.startDateTen,
-        endDateTen: item.endDateTen,
-        discountTenStatus,
-        discountFive: item.discountFive,
-        startDateFive: item.startDateFive,
-        endDateFive: item.endDateFive,
-        discountFiveStatus,
-        earlyPayoffStatus: item.earlyPayoffStatus,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        TenDicountAmount: TenDicountAmount.toFixed(2),
-        FiveDicountAmount: FiveDicountAmount.toFixed(2),
-      };
-    })
-  );
+  if (
+    customer.totalRepayment &&
+    customer.remainingRepayment &&
+    approvedCreditLine > 0
+  ) {
+    const remainingPercent = (customer.remainingRepayment / customer.totalRepayment) * 100;
+    const totalWithdrawAmountData = customer.totalRepayment - customer.remainingRepayment;
+    const withdrawPercent = (totalWithdrawAmountData / approvedCreditLine) * 100;
 
-  res.status(200).json({ success: true, data: result });
+    if (remainingPercent <= 50 && withdrawPercent >= 50) {
+      creditIncrease = true;
+    }
+  }
+
+  // ✅ If admin, get total customer count
+  let totalCustomers = 0;
+  let pendingRequest = 0;
+  let approvedRequest = 0;
+  if (customer.role === "admin") {
+    totalCustomers = await Customer.countDocuments({ role: 'customer' });
+    pendingRequest = await Withdraw.countDocuments({ withdrawStatus: 'pending' })
+    approvedRequest = await Withdraw.countDocuments({ withdrawStatus: 'Approved' })
+  }
+  res.status(200).json({
+    message: "Login successful",
+    customer: {
+      id: customer._id,
+      customerName: customer.customerName,
+      companyName: customer.companyName,
+      email: customer.email,
+      phoneNumber: customer.phoneNumber,
+      address: customer.address,
+      creditLine: customer.creditLine,
+      factorRate: customer.factorRate,
+      gstDoc: customer.gstDoc,
+      panDoc: customer.panDoc,
+      role: customer.role,
+      remainingRepayment: customer.remainingRepayment,
+      token,
+      minimumWithdrawl,
+      requiredMinimumAmount: customer.approvedAmount * 10 / 100,
+      creditIncrease,
+      ...(customer.role === "admin" && { totalCustomers, pendingRequest, approvedRequest }), // ✅ only include if admin
+    },
+  });
 });
 
+export const changePassword = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  const { id } = req.params;
+
+  if (!password) {
+    res.status(400);
+    throw new Error("New password is required");
+  }
+
+  const customer = await Customer.findById(id);
+  if (!customer) {
+    res.status(404);
+    throw new Error("Customer not found");
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  await Customer.findByIdAndUpdate(
+    id,
+    { password: hashedPassword },
+    { new: true }
+  );
+
+  res.status(200).json({ message: "Password updated successfully" });
+});
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const customer = await Customer.findOne({ email });
+  if (!customer) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const token = crypto.randomBytes(20).toString("hex");
+
+  customer.resetToken = token;
+  customer.resetTokenExpiry = Date.now() + 3600000;
+  await customer.save();
 
 
+  res.status(200).json({
+    message: "Reset token generated",
+    resetToken: token,
+    note: "Use this token in /reset-password/:token API",
+  });
+});
 
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  const customer = await Customer.findOne({
+    resetToken: token,
+    resetTokenExpiry: { $gt: Date.now() },
+  });
+
+  if (!customer) {
+    res.status(400);
+    throw new Error("Invalid or expired token");
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+  customer.password = hashedPassword;
+  customer.resetToken = undefined;
+  customer.resetTokenExpiry = undefined;
+
+  await customer.save();
+
+  res.status(200).json({ message: "Password reset successful" });
+});
 
 
