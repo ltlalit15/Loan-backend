@@ -210,7 +210,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   try {
     const sendData = await transporter.sendMail(mailOptions);
-    console.log("Nodemailer Response:", sendData);
+    // console.log("Nodemailer Response:", sendData);
     res.status(200).json({ message: "Reset email sent successfully",token });
   } catch (error) {
     console.error("Nodemailer Error:", error);
